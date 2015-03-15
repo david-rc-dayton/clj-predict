@@ -3,10 +3,10 @@
 (def ^{:private true} wgs84 
   "Parameters in the 1984 World Geodetic System (WGS84) defining the
    measurements of the Earth's reference ellipsoid. Available 
-   parameters are: <br>
-   `:semi-major-axis` - Earth's equatorial radius (in kilometers) <br>
-   `:semi-minor-axis` - Earth's polar radius (in kilometers) <br>
-   `:ecc-squared` - squared eccentricity of the reference ellipsoid"
+   parameters are:
+     :semi-major-axis  Earth's equatorial radius (in kilometers)
+     :semi-minor-axis  Earth's polar radius (in kilometers)
+     :ecc-squared      squared eccentricity of the reference ellipsoid"
   (let [a 6378137
         f (/ 1 298.257223563)]
     {:semi-major-axis a
@@ -25,7 +25,7 @@
 
 (defn geo-radius
   "Calculate Earth's geocentric radius (in meters) for a map containing the key
-   `{:latitude}` in degrees."
+   {:latitude} in degrees."
   [{:keys [latitude]}]
   (let [lat (deg->rad latitude)
         a (:semi-major-axis wgs84)
@@ -38,7 +38,7 @@
 
 (defn adist-haversine
   "Calculate angular distance (in degrees) between two points, using maps
-   containing the keys `{:latitude :longitude}` in degrees as arguments. This
+   containing the keys {:latitude :longitude} in degrees as arguments. This
    function uses the Haversine Formula (the slowest, most accurate method) for
    angular distance computation."
   [{:keys [latitude longitude] :as start-point}
@@ -56,7 +56,7 @@
 
 (defn adist-cosine
   "Calculate angular distance (in degrees) between two points, using maps
-   containing the keys `{:latitude :longitude}` in degrees as arguments. This
+   containing the keys {:latitude :longitude} in degrees as arguments. This
    function uses the Spherical Law of Cosines (faster, but less accurate than 
    the Haversine Formula) for angular distance computation."
   [{:keys [latitude longitude] :as start-point}
@@ -71,7 +71,7 @@
 
 (defn adist-horizon
   "Calculate the angular distance to horizon from a satellite, denoted by a
-   location map containing the keys `{:latitude :altitude}` in degrees and
+   location map containing the keys {:latitude :altitude} in degrees and
    meters. This function returns the angular distance to the horizon from nadir
    in degrees."
   [{:keys [latitude altitude] :as satellite}]
@@ -80,23 +80,23 @@
     (rad->deg (Math/acos (/ re re-plus-h)))))
 
 (defn adiam-sphere
-  "Calculate the angular diameter for an sphere, given the `distance` from the
-   observer to the sphere's center, and the sphere's `diameter`. Both `distance`
-   and `diameter` must be in the same units, and the output is in degrees."
+  "Calculate the angular diameter for an sphere, given the [distance] from the
+   observer to the sphere's center, and the sphere's [diameter]. Both [distance]
+   and [diameter] must be in the same units, and the output is in degrees."
   [distance diameter]
   (rad->deg (* 2 (Math/asin (/ diameter (* 2 distance))))))
 
 (defn adiam-disc
-  "Calculate the angular diameter for a disc, given the `distance` from the
-   observer to the disc, and the disc's `diameter`. Both `distance`
-   and `diameter` must be in the same units, and the output is in degrees."
+  "Calculate the angular diameter for a disc, given the [distance] from the
+   observer to the disc, and the disc's [diameter]. Both [distance]
+   and [diameter] must be in the same units, and the output is in degrees."
   [distance diameter]
   (rad->deg (* 2 (Math/atan (/ diameter (* 2 distance))))))
 
 (defn geodetic->ecf
   "Convert a map of Geodetic coordinates containing the keys
-   `{:latitude :longitude :altitude}` in degrees and meters to an Earth Centered
-   Fixed coordinate map `{:xf :yf :zf}` in meters."
+   {:latitude :longitude :altitude} in degrees and meters to an Earth Centered
+   Fixed coordinate map {:xf :yf :zf} in meters."
   [{:keys [latitude longitude altitude]}]
   (let [phi (deg->rad latitude)
         lambda (deg->rad longitude)
@@ -112,8 +112,8 @@
 
 (defn ecf->geodetic
   "Convert a map of Earth Centered Fixed coordinates containing the keys
-   `{:xf :yf :zf}` in meters, to a Geodetic coordinate map 
-   `{:latitude :longitude :altitude}` in degrees and meters, respectively."
+   {:xf :yf :zf} in meters, to a Geodetic coordinate map 
+   {:latitude :longitude :altitude} in degrees and meters, respectively."
   [{:keys [xf yf zf]}]
   (let [lambda (mod (Math/atan2 yf xf) (deg->rad 360))
         p (Math/sqrt (+ (* xf xf) (* yf yf)))
@@ -144,7 +144,7 @@
 
 (defn ^{:private true} azimuth
   "Calculate the azimuth between an earth-station and a satellite, using maps
-   containing the keys `{:latitude :longitude}` in degrees and meters,
+   containing the keys {:latitude :longitude} in degrees and meters,
    respectively. Azimuth is returned in degrees from true north."
   [{:keys [latitude longitude] :as earth-station} 
    {:keys [latitude longitude] :as satellite}]
@@ -159,7 +159,7 @@
 
 (defn ^{:private true} elevation
   "Calculate elevation between an earth-station and satellite using maps
-   containing the keys `{:latitude :longitude :altitude}` in degrees and meters,
+   containing the keys {:latitude :longitude :altitude} in degrees and meters,
    as arguments. Elevation is returned in degrees above the horizon."
   [{:keys [latitude longitude altitude] :as earth-station} 
    {:keys [latitude longitude altitude] :as satellite}]
@@ -180,7 +180,7 @@
 
 (defn ^{:private true} distance
   "Calculate range between an earth station and a satellite using
-   maps containing the keys `{:latitude :longitude :altitude}` in degrees and
+   maps containing the keys {:latitude :longitude :altitude} in degrees and
    meters, as arguments. Distance is returned in meters."
   [{:keys [latitude longitude altitude] :as earth-station}
    {:keys [latitude longitude altitude] :as satellite}]
@@ -193,12 +193,12 @@
 
 (defn look-angle
   "Calculate the look angles between earth station and satellite locations,
-   using maps containing the keys `{:latitude :longitude :altitude}` in degrees
-   and meters, as arguments. Outputs a map containing:<br>
-   > `:azimuth`   (in degrees)<br>
-   > `:elevation` (in degrees)<br>
-   > `:range`     (slant-range in meters)<br>
-   > `:visible?`  (true if satellite is in view of earth-station)"
+   using maps containing the keys {:latitude :longitude :altitude} in degrees
+   and meters, as arguments. Outputs a map containing:
+     :azimuth    (in degrees)
+     :elevation  (in degrees)
+     :range      (slant-range in meters)
+     :visible?   (true if satellite is in view of earth-station)"
   [{:keys [latitude longitude altitude] :as earth-station} 
    {:keys [latitude longitude altitude] :as satellite}]
   (let [az (azimuth earth-station satellite)

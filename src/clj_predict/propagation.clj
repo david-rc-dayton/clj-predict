@@ -3,17 +3,17 @@
            [uk.me.g4dpz.satellite SatelliteFactory TLE]))
 
 (defn ^{:private true} str->tle
-  "Convert a Three Line Element (TLE) set, as a string vector of the form
-   `[line1 line2 line3]` into a `predict4java` `TLE` object. `line1` will be the
-   name of the spacecraft; `line2` and `line3` will be lines 1 & 2 of the
+  "Convert a Three Line Element (TLE) set, as a vector containing strings of the
+   form [line1 line2 line3] into a 'predict4java' TLE object. [line1] will be
+   the name of the spacecraft; [line2] and [line3] will be lines 1 & 2 of the
    orbital elements."
   [[line1 line2 line3 :as tle]]
   (TLE. (into-array String tle)))
 
 (defn valid-tle?
   "Determine if Three Line Element Set is valid based on the checksum value for
-   each line. This function takes a vector of strings for `[line1 line2 line3]`.
-   Output is `true` if the TLE set is valid."
+   each line. This function takes a vector of strings for [line1 line2 line3].
+   Output is [true] if the TLE set format is valid and passes a checksum."
   [[line1 line2 line3 :as tle]]
   (let [char->int #(Character/getNumericValue %)
         digits (set (map char (range 48 58)))
@@ -29,10 +29,10 @@
 
 (defn propagate
   "Propagate satellite vectors using a Three Line Element (TLE) set, as a string
-   vector of the form `[line1 line2 line3]` and the date/time as a Java Date
+   vector of the form [line1 line2 line3] and the date/time as a Java Date
    Object argument. The function's output will be a location map, containing the
-   keys `{:latitude :longitude :altitude}` in degrees and meters. If a date is
-   not entered, the current system time is used."
+   keys {:latitude :longitude :altitude} in degrees and meters respectively. If
+   a date is not entered, the current system time is used."
   ([[line1 line2 line3 :as tle]]
     (propagate tle (java.util.Date.)))
   ([[line1 line2 line3 :as tle] ^java.util.Date date]

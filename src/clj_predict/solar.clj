@@ -8,7 +8,7 @@
 
 (defn ^{:private true} day-of-year
   "Return the number of days elapsed since the beginning of the year for input
-   argument `date`. Returns a floating point representation of elapsed time in
+   argument [date]. Returns a floating point representation of elapsed time in
    the UTC timezone."
   [^java.util.Date date]
   (let [cal (doto (java.util.Calendar/getInstance
@@ -22,7 +22,7 @@
     (double (+ d f))))
 
 (defn ^{:private true} solar-latitude
-  "Return the latitude of the sun, in degrees, for the input `date`."
+  "Return the latitude of the sun, in degrees, for the input [date]."
   [^java.util.Date date]
   (let [d (+ (day-of-year date)
              (+ (* (:orbital-period solar-properties) 3/4) 10))
@@ -32,7 +32,7 @@
     (* t (Math/sin (* r d)))))
 
 (defn ^{:private true} solar-longitude
-  "Return the longitude of the sun, in degrees, for input `date`."
+  "Return the longitude of the sun, in degrees, for input [date]."
   [^java.util.Date date]
   (let [d (day-of-year date)
         p (:orbital-period solar-properties)
@@ -47,7 +47,7 @@
 
 (defn ^{:private true} solar-altitude
   "Calculate the distance of the Sun from Earth in meters for input argument
-   `date`."
+   [date]."
   [^java.util.Date date]
   (let [dn (day-of-year date)
         ro (:mean-distance solar-properties)
@@ -58,9 +58,9 @@
     (* ro (+ 1 (* ec (Math/sin (/ (* 2 pi (- dn t)) T)))))))
 
 (defn solar-position
-  "Return a map containing the `:latitude` and `:longitude` of the sun in
-   degrees, as well as the `:altitude` in meters for the input `date`. If a 
-   date object is not provided, current system time will be used."
+  "Return a map containing the {:latitude :longitude :altitude} of the sun in
+   degrees and meters respectively, for the input Java Date object [date]. If a 
+   [date] object is not provided, current system time will be used."
   ([]
     (solar-position (java.util.Date.)))
   ([^java.util.Date date]
