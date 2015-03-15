@@ -1,12 +1,12 @@
 (ns clj-predict.solar)
 
-(def ^{:private true} solar-properties
+(def solar-properties
   {:mean-distance 149597870700
    :eccentricity 0.0161700
    :orbital-period 365.25636
    :declination 23.439281})
 
-(defn ^{:private true} day-of-year
+(defn day-of-year
   "Return the number of days elapsed since the beginning of the year for input
    argument [date]. Returns a floating point representation of elapsed time in
    the UTC timezone."
@@ -21,7 +21,7 @@
         f (/ (+ (* h 3600) (* m 60) s) 86400)]
     (double (+ d f))))
 
-(defn ^{:private true} solar-latitude
+(defn solar-latitude
   "Return the latitude of the sun, in degrees, for the input [date]."
   [^java.util.Date date]
   (let [d (+ (day-of-year date)
@@ -31,7 +31,7 @@
         rad->deg #(* % (/ 180 Math/PI))]
     (* t (Math/sin (* r d)))))
 
-(defn ^{:private true} solar-longitude
+(defn solar-longitude
   "Return the longitude of the sun, in degrees, for input [date]."
   [^java.util.Date date]
   (let [d (day-of-year date)
@@ -45,7 +45,7 @@
       (> t 180) (- t 360)
       :else t)))
 
-(defn ^{:private true} solar-altitude
+(defn solar-altitude
   "Calculate the distance of the Sun from Earth in meters for input argument
    [date]."
   [^java.util.Date date]

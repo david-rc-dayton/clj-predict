@@ -2,7 +2,7 @@
   (:import [org.apache.commons.lang StringUtils]
            [uk.me.g4dpz.satellite SatelliteFactory TLE]))
 
-(defn ^{:private true} str->tle
+(defn str->tle
   "Convert a Three Line Element (TLE) set, as a vector containing strings of the
    form [line1 line2 line3] into a 'predict4java' TLE object. [line1] will be
    the name of the spacecraft; [line2] and [line3] will be lines 1 & 2 of the

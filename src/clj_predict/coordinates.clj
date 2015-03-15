@@ -1,6 +1,6 @@
 (ns clj-predict.coordinates)
 
-(def ^{:private true} wgs84 
+(def wgs84 
   "Parameters in the 1984 World Geodetic System (WGS84) defining the
    measurements of the Earth's reference ellipsoid. Available 
    parameters are:
@@ -13,12 +13,12 @@
      :semi-minor-axis (* a (- 1 f))
      :ecc-squared (- (* 2 f) (* f f))}))
 
-(defn ^{:private true} deg->rad 
+(defn deg->rad 
   "Converts argument `deg` from degrees to radians."
   [deg]
   (* deg (/ Math/PI 180)))
 
-(defn ^{:private true} rad->deg
+(defn rad->deg
   "Converts argument `rad` from radians to degrees."
   [rad]
   (* rad (/ 180 Math/PI)))
@@ -142,7 +142,7 @@
                :altitude (- (Math/sqrt (+ (* xf xf) (* yf yf) (* zd zd))) n)})
             (recur zi-next)))))))
 
-(defn ^{:private true} azimuth
+(defn azimuth
   "Calculate the azimuth between an earth-station and a satellite, using maps
    containing the keys {:latitude :longitude} in degrees and meters,
    respectively. Azimuth is returned in degrees from true north."
@@ -157,7 +157,7 @@
              (* (Math/sin Le) (Math/cos Ls) (Math/cos ls-le)))]
     (mod (+ 360 (rad->deg (Math/atan2 y x))) 360)))
 
-(defn ^{:private true} elevation
+(defn elevation
   "Calculate elevation between an earth-station and satellite using maps
    containing the keys {:latitude :longitude :altitude} in degrees and meters,
    as arguments. Elevation is returned in degrees above the horizon."
@@ -178,7 +178,7 @@
     (rad->deg (Math/atan (- (Math/tan D-prime)
                             (/ 1 (* K (Math/cos D-prime))))))))
 
-(defn ^{:private true} distance
+(defn distance
   "Calculate range between an earth station and a satellite using
    maps containing the keys {:latitude :longitude :altitude} in degrees and
    meters, as arguments. Distance is returned in meters."
