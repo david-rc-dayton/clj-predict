@@ -1,5 +1,7 @@
 (ns clj-predict.coordinates)
 
+(def ^:dynamic *adist-default* :haversine)
+
 (def wgs84 
   "Parameters in the 1984 World Geodetic System (WGS84) defining the
    measurements of the Earth's reference ellipsoid. Available 
@@ -69,15 +71,49 @@
                                (* (Math/cos p1) (Math/cos p2) 
                                   (Math/cos delta-l))))))))
 
+(defn adist-equirect
+  "Calculate angular distance (in degrees) between two points, using maps
+   containing the keys {:latitude :longitude} in degrees as arguments. This
+   function uses the Equirectangular Approximation  (fastest, but lease accurate
+   method of calcualtion) for angular distance computation."
+  [{:keys [latitude longitude] :as start-point}
+   {:keys [latitude longitude] :as end-point}]
+  (let [delta-lambda (- (:longitude end-point) (:longitude start-point))
+        phi-m (/ (+ (:latitude end-point) (:latitude start-point)) 2)
+        x (* delta-lambda (Math/cos (deg->rad phi-m)))
+        y (- (:latitude end-point) (:latitude start-point))]
+    (Math/sqrt (+ (* x x) (* y y)))))
+
+(defn adist
+  "Calculate angular distance (in degrees) between two points, using maps
+   containing the keys {:latitude :longitude} in degrees as arguments. The
+   algorithm used can be selected by entering one of the following as the first
+   argument [:haversine :cosine :equirect]. Differences between each algorithm
+   can be found in the adist-[haversine|cosine|equirect] documentation. Default
+   method set in the *adist-default* var."
+  ([{:keys [latitude longitude] :as start-point}
+    {:keys [latitude longitude] :as end-point}]
+    (adist *adist-default* start-point end-point))
+  ([^clojure.lang.Keyword algorithm
+    {:keys [latitude longitude] :as start-point}
+    {:keys [latitude longitude] :as end-point}]
+    (let [options {:haversine adist-haversine
+                   :cosine    adist-cosine
+                   :equirect  adist-equirect}
+          method (get options algorithm)]
+      (method start-point end-point))))
+
 (defn adist-horizon
-  "Calculate the angular distance to horizon from a satellite, denoted by a
-   location map containing the keys {:latitude :altitude} in degrees and
-   meters. This function returns the angular distance to the horizon from nadir
-   in degrees."
-  [{:keys [latitude altitude] :as satellite}]
-  (let [re (geo-radius satellite)
-        re-plus-h (+ re altitude)]
-    (rad->deg (Math/acos (/ re re-plus-h)))))
+  "Calculate the angular distance to horizon from an observer on a sphere with
+   a radius equivalent to that of a point on (or near) the Earth's surface,
+   denoted location maps containing the keys {:latitude :altitude} in degrees
+   and meters respectively. This function returns the angular distance to the
+   horizon from nadir in degrees."
+  [{:keys [latitude altitude] :as observer}
+   {:keys [latitude altitude] :as point}]
+  (let [r (+ (geo-radius point) (:altitude point))
+        h (+ (geo-radius observer) (:altitude observer))]
+    (rad->deg (Math/acos (/ r h)))))
 
 (defn adiam-sphere
   "Calculate the angular diameter for an sphere, given the [distance] from the
@@ -92,6 +128,20 @@
    and [diameter] must be in the same units, and the output is in degrees."
   [distance diameter]
   (rad->deg (* 2 (Math/atan (/ diameter (* 2 distance))))))
+
+(defn earth-visible?
+  "Return [true] if a point on the Earth's surface is visible by a satellite
+   observer. The method of calculation can be set by passing the algorithm
+   type keyword as the first argument. The default algorithm can be set in
+   the *adist-default* var."
+  ([{:keys [latitude longitude altitude] :as observer}
+    {:keys [latitude longitude altitude] :as point}]
+    (earth-visible? *adist-default* observer point))
+  ([^clojure.lang.Keyword method
+    {:keys [latitude longitude altitude] :as observer}
+    {:keys [latitude longitude altitude] :as point}]
+    (let [limit (adist-horizon observer point)]
+      (<= (adist method observer point) limit))))
 
 (defn geodetic->ecf
   "Convert a map of Geodetic coordinates containing the keys

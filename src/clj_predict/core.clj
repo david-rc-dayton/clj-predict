@@ -5,35 +5,15 @@
 
 ;;; [clj-predict.coordinates] ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn geo-radius
+(defn adist
   [& args]
-  "Alias for [clj-predict.coordinates/geo-radius]."
-  (apply coord/geo-radius args))
+  "Alias for [clj-predict.coordinates/adist]."
+  (apply coord/adist args))
 
-(defn adist-haversine
+(defn earth-visible?
   [& args]
-  "Alias for [clj-predict.coordinates/adist-haversine]."
-  (apply coord/adist-haversine args))
-
-(defn adist-cosine
-  [& args]
-  "Alias for [clj-predict.coordinates/adist-cosine]."
-  (apply coord/adist-cosine args))
-
-(defn adist-horizon
-  [& args]
-  "Alias for [clj-predict.coordinates/adist-horizon]."
-  (apply coord/adist-horizon args))
-
-(defn adiam-sphere
-  [& args]
-  "Alias for [clj-predict.coordinates/adiam-sphere]."
-  (apply coord/adiam-sphere args))
-
-(defn adiam-disc
-  [& args]
-  "Alias for [clj-predict.coordinates/adiam-disc]."
-  (apply coord/adiam-disc args))
+  "Alias for [clj-predict.coordinates/earth-visible?]."
+  (apply coord/earth-visible? args))
 
 (defn geodetic->ecf
   [& args]
