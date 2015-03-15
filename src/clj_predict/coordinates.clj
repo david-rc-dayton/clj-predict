@@ -1,6 +1,6 @@
 (ns clj-predict.coordinates)
 
-(def ^:dynamic *adist-default* :haversine)
+(def ^:dynamic *adist-default* :cosine)
 
 (def wgs84 
   "Parameters in the 1984 World Geodetic System (WGS84) defining the
