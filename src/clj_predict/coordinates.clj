@@ -1,6 +1,6 @@
 (ns clj-predict.coordinates)
 
-(def ^:dynamic *adist-default* :cosine)
+(def ^:dynamic *adist-method* :cosine)
 
 (def wgs84 
   "Parameters in the 1984 World Geodetic System (WGS84) defining the
@@ -90,10 +90,10 @@
    algorithm used can be selected by entering one of the following as the first
    argument [:haversine :cosine :equirect]. Differences between each algorithm
    can be found in the adist-[haversine|cosine|equirect] documentation. Default
-   method set in the *adist-default* var."
+   method bound in the *adist-method* var."
   ([{:keys [latitude longitude] :as start-point}
     {:keys [latitude longitude] :as end-point}]
-    (adist *adist-default* start-point end-point))
+    (adist *adist-method* start-point end-point))
   ([^clojure.lang.Keyword algorithm
     {:keys [latitude longitude] :as start-point}
     {:keys [latitude longitude] :as end-point}]
@@ -132,16 +132,45 @@
 (defn earth-visible?
   "Return [true] if a point on the Earth's surface is visible by a satellite
    observer. The method of calculation can be set by passing the algorithm
-   type keyword as the first argument. The default algorithm can be set in
-   the *adist-default* var."
+   type keyword as the first argument. The default algorithm can be bound in
+   the *adist-method* var."
   ([{:keys [latitude longitude altitude] :as observer}
     {:keys [latitude longitude altitude] :as point}]
-    (earth-visible? *adist-default* observer point))
+    (earth-visible? *adist-method* observer point))
   ([^clojure.lang.Keyword method
     {:keys [latitude longitude altitude] :as observer}
     {:keys [latitude longitude altitude] :as point}]
     (let [limit (adist-horizon observer point)]
       (<= (adist method observer point) limit))))
+
+(defn destination-point
+  "Calculate the destination from a point on the Earth's surface given a
+   starting bearing and angular distance in degrees. Outputs a map containing
+   the keys {:latitude :longitude} in degrees."
+  [{:keys [latitude longitude] :as earth-point} bearing adist]
+  (let [phi-1 (deg->rad latitude)
+        lam-1 (deg->rad longitude)
+        theta (deg->rad bearing)
+        sigma (deg->rad adist)
+        phi-2 (Math/asin (+ (* (Math/sin phi-1) (Math/cos sigma))
+                            (* (Math/cos phi-1) (Math/sin sigma)
+                               (Math/cos theta))))
+        lam-2 (+ lam-1 (Math/atan2 (* (Math/sin theta) (Math/sin sigma)
+                                      (Math/cos phi-1))
+                                   (- (Math/cos sigma)
+                                      (* (Math/sin phi-1) (Math/sin phi-2)))))]
+    {:latitude (rad->deg phi-2) :longitude (rad->deg lam-2) :altitude 0}))
+
+(defn surface-outline
+  "Build a list of points {:latitude :longitude :altitude} outlining a
+   satellite's field-of-view. Takes an input satellite location map
+   {:latitude :longitude :altitude} and the angular separation [degree-sep]
+   between each point radially from the center in degrees."
+  [{:keys [latitude longitude altitude] :as satellite} degree-sep]
+  (let [bearing-list (range 0 360 degree-sep)
+        limit (adist-horizon satellite {:latitude 0 :altitude 0})
+        outline-fn #(destination-point satellite % limit)]
+    (map outline-fn bearing-list)))
 
 (defn geodetic->ecf
   "Convert a map of Geodetic coordinates containing the keys

@@ -15,6 +15,11 @@
   "Alias for [clj-predict.coordinates/earth-visible?]."
   (apply coord/earth-visible? args))
 
+(defn surface-outline
+  [& args]
+  "Alias for [clj-predict.coordinates/surface-outline]."
+  (apply coord/surface-outline args))
+
 (defn geodetic->ecf
   [& args]
   "Alias for [clj-predict.coordinates/geodetic->ecf]."
