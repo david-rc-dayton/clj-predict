@@ -6,4 +6,6 @@
             :distribution :repo}
   :resource-paths ["lib/predict4java-1.1.158.4.jar"
                    "lib/commons-lang-2.6.jar"]
-  :dependencies [[org.clojure/clojure "1.6.0"]])
+  :dependencies [[org.clojure/clojure "1.6.0"]]
+  :aot :all
+  :omit-souce true)
