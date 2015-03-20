@@ -33,9 +33,9 @@
         tle-clean (->> (map replace-dash (rest tle))
                     (map #(filter digits (apply vector %)))
                     (map #(map char->int (apply vector %))))]
-    (and (not (clojure.string/blank? (.trim line1)))
-         (not (clojure.string/blank? (.trim line2)))
-         (not (clojure.string/blank? (.trim line3)))
+    (and (not (clojure.string/blank? (.trim name)))
+         (not (clojure.string/blank? (.trim first-line)))
+         (not (clojure.string/blank? (.trim second-line)))
          (every? true? (map valid? tle-clean)))))
 
 (defn propagate
