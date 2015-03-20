@@ -1,6 +1,0 @@
-target/
-doc/
-.*
-!/.gitignore
-\#*#
-pom.xml
