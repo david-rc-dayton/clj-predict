@@ -8,7 +8,7 @@ propagation and other space maths. To use *clj-predict* with your
     [clj-predict "0.0.1-SNAPSHOT"]
 
 Documentation: http://david-rc-dayton.github.io/clj-predict/  
-Download: https://clojars.org/clj-predict
+Repository: https://clojars.org/clj-predict
 
 ## Credits
 
