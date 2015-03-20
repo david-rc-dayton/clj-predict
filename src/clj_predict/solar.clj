@@ -13,7 +13,7 @@
    :orbital-period 365.25636
    :declination 23.439281})
 
-(defn day-of-year
+(defn ^{:private true} day-of-year
   "Calculate the number of days elapsed since the beginning of the year. Takes
    a `java.util.Date` object for the starting time as its only argument.
 
@@ -29,7 +29,7 @@
         f (/ (+ (* h 3600) (* m 60) s) 86400)]
     (double (+ d f))))
 
-(defn solar-latitude
+(defn ^{:private true} solar-latitude
   "Calculate the latitude of the Sun. Takes a `java.util.Date` object as its
    only argument.
 
@@ -42,7 +42,7 @@
         rad->deg #(* % (/ 180 Math/PI))]
     (* t (Math/sin (* r d)))))
 
-(defn solar-longitude
+(defn ^{:private true} solar-longitude
   "Calculate the longitude of the Sun. Takes a `java.util.Date` object as its
    only argument.
 
@@ -59,7 +59,7 @@
       (> t 180) (- t 360)
       :else t)))
 
-(defn solar-altitude
+(defn ^{:private true} solar-altitude
   "Calculate the distance between the Earth and the Sun. Takes a
    `java.util.Date` object as its only argument.
 
