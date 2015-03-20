@@ -25,7 +25,7 @@
 
    Returns `true` if the TLE vector appears properly formatted and passes a
    checksum."
-  [[line1 line2 line3 :as tle]]
+  [[name first-line second-line :as tle]]
   (let [char->int #(Character/getNumericValue %)
         digits (set (map char (range 48 58)))
         replace-dash #(clojure.string/replace % "-" "1")
@@ -47,7 +47,7 @@
 
    Returns the satellite's location as a map containing the keys
    `:lat :lon :alt`, in degrees and meters."
-  ([[line1 line2 line3 :as tle] ^java.util.Date date]
+  ([[name first-line second-line :as tle] date]
     (let [tle (str->tle tle)
           factory (doto (SatelliteFactory/createSatellite tle)
                     (.calculateSatelliteVectors date))
