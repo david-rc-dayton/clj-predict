@@ -1,19 +1,30 @@
 (ns clj-predict.propagation
-  (:import [org.apache.commons.lang StringUtils]
-           [uk.me.g4dpz.satellite SatelliteFactory TLE]))
+  (:import [uk.me.g4dpz.satellite SatelliteFactory TLE]))
 
-(defn str->tle
-  "Convert a Two Line Element (TLE) set, as a vector containing strings of the
-   form [line1 line2 line3] into a 'predict4java' TLE object. [line1] will be
-   the name of the spacecraft; [line2] and [line3] will be lines 1 & 2 of the
-   orbital elements."
-  [[line1 line2 line3 :as tle]]
+(defn ^{:private true} str->tle
+  "Convert a *Two Line Element (TLE)* set, into a usable `predict4java` TLE
+   object. Takes a single vector containing text strings of the form
+   `[name first-line second-line]` where:
+
+   > `name` - The name of the spacecraft  
+   > `first-line` - Line 1 of the orbital elements  
+   > `second-line` - Line 2 of the orbital elements
+
+   Returns a `predict4java` TLE object for use with the SGP4 propagator."
+  [[name first-line second-line :as tle]]
   (TLE. (into-array String tle)))
 
 (defn valid-tle?
-  "Determine if Two Line Element Set is valid based on the checksum value for
-   each line. This function takes a vector of strings for [line1 line2 line3].
-   Output is [true] if the TLE set format is valid and passes a checksum."
+  "Determine if a *Two Line Element Set (TLE)* is valid based on the checksum
+   value for each line. Takes a single vector containing text strings of the
+   form `[name first-line second-line]` where:
+
+   > `name` - The name of the spacecraft  
+   > `first-line` - Line 1 of the orbital elements  
+   > `second-line` - Line 2 of the orbital elements
+
+   Returns `true` if the TLE vector appears properly formatted and passes a
+   checksum."
   [[line1 line2 line3 :as tle]]
   (let [char->int #(Character/getNumericValue %)
         digits (set (map char (range 48 58)))
@@ -28,13 +39,14 @@
          (every? true? (map valid? tle-clean)))))
 
 (defn propagate
-  "Propagate satellite vectors using a Two Line Element (TLE) set, as a string
-   vector of the form [line1 line2 line3] and the date/time as a Java Date
-   Object argument. The function's output will be a location map, containing the
-   keys {:latitude :longitude :altitude} in degrees and meters respectively. If
-   a date is not entered, the current system time is used."
-  ([[line1 line2 line3 :as tle]]
-    (propagate tle (java.util.Date.)))
+  "Propagate satellite ephemeris using a *Two Line Element (TLE)* set. Takes two
+   arguments:
+
+   > `tle` - Vector containing tle data (see `valid-tle?`)  
+   > `date` - A `java.util.Date` object used as the propagation date
+
+   Returns the satellite's location as a map containing the keys
+   `:lat :lon :alt`, in degrees and meters."
   ([[line1 line2 line3 :as tle] ^java.util.Date date]
     (let [tle (str->tle tle)
           factory (doto (SatelliteFactory/createSatellite tle)
@@ -47,4 +59,4 @@
                       (< temp-longitude 0) (+ temp-longitude 360)
                       :else temp-longitude)
           altitude (*  (.getAltitude position) 1000)]
-      {:latitude latitude :longitude longitude :altitude altitude})))
+      {:lat latitude :lon longitude :alt altitude})))

@@ -1,15 +1,23 @@
 (ns clj-predict.solar)
 
 (def solar-properties
+  "Orbital properties of the Earth relative to the Sun. Available keys for the
+   returned `solar-properties` map are:
+
+   > `:mean-distance` - Average distance of the Earth from the Sun, in meters  
+   > `:eccentricity` - Eccentricity of the Earth's orbit around the Sun  
+   > `:orbital-period` - Duration of the Earth's orbit around the Sun, in days  
+   > `:declination` - Solar elevation above the Equator at solstice, in degrees"
   {:mean-distance 149597870700
    :eccentricity 0.0161700
    :orbital-period 365.25636
    :declination 23.439281})
 
 (defn day-of-year
-  "Return the number of days elapsed since the beginning of the year for input
-   argument [date]. Returns a floating point representation of elapsed time in
-   the UTC timezone."
+  "Calculate the number of days elapsed since the beginning of the year. Takes
+   a `java.util.Date` object for the starting time as its only argument.
+
+   Returns a floating point representation of elapsed time in the UTC timezone."
   [^java.util.Date date]
   (let [cal (doto (java.util.Calendar/getInstance
                     (java.util.TimeZone/getTimeZone "UTC"))
@@ -22,7 +30,10 @@
     (double (+ d f))))
 
 (defn solar-latitude
-  "Return the latitude of the sun, in degrees, for the input [date]."
+  "Calculate the latitude of the Sun. Takes a `java.util.Date` object as its
+   only argument.
+
+   Returns the Sun's latitude at the given time, in degrees."
   [^java.util.Date date]
   (let [d (+ (day-of-year date)
              (+ (* (:orbital-period solar-properties) 3/4) 10))
@@ -32,7 +43,10 @@
     (* t (Math/sin (* r d)))))
 
 (defn solar-longitude
-  "Return the longitude of the sun, in degrees, for input [date]."
+  "Calculate the longitude of the Sun. Takes a `java.util.Date` object as its
+   only argument.
+
+   Returns the Sun's longitude at the given time, in degrees."
   [^java.util.Date date]
   (let [d (day-of-year date)
         p (:orbital-period solar-properties)
@@ -46,8 +60,10 @@
       :else t)))
 
 (defn solar-altitude
-  "Calculate the distance of the Sun from Earth in meters for input argument
-   [date]."
+  "Calculate the distance between the Earth and the Sun. Takes a
+   `java.util.Date` object as its only argument.
+
+   Returns the Sun's altitude at the given time, in meters."
   [^java.util.Date date]
   (let [dn (day-of-year date)
         ro (:mean-distance solar-properties)
@@ -58,12 +74,12 @@
     (* ro (+ 1 (* ec (Math/sin (/ (* 2 pi (- dn t)) T)))))))
 
 (defn solar-position
-  "Return a map containing the {:latitude :longitude :altitude} of the sun in
-   degrees and meters respectively, for the input Java Date object [date]. If a 
-   [date] object is not provided, current system time will be used."
-  ([]
-    (solar-position (java.util.Date.)))
+  "Calculate the location of the Sun relative to the Earth. Takes a
+   `java.util.Date` object as its only argument.
+
+   Returns a map containing the keys `:lat :lon :alt` of the Sun at the given
+   time, in degrees and meters."
   ([^java.util.Date date]
-    {:latitude (solar-latitude date) 
-     :longitude (solar-longitude date)
-     :altitude (solar-altitude date)}))
+    {:lat (solar-latitude date) 
+     :lon (solar-longitude date)
+     :alt (solar-altitude date)}))

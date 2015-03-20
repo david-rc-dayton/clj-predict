@@ -6,4 +6,5 @@
             :distribution :repo}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [uk.me.g4dpz/predict4java "1.1.3"]]
-  :profiles {:dev {:plugins [[codox "0.8.11"]]}})
+  :profiles {:dev {:plugins [[codox "0.8.11"]]
+                   :codox {:defaults {:doc/format :markdown}}}})
