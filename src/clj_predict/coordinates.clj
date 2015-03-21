@@ -151,10 +151,10 @@
   ([{:keys [lat lon alt] :as observer}
     {:keys [lat lon alt] :as point}
     adist-fn]
-    (let [limit (horizon observer point)]
+    (let [limit (horizon observer)]
       (<= (adist-fn observer point) limit))))
 
-(defn destination-point
+(defn ^{:private true} destination-point
   "Calculate the destination from a point on the Earth's surface when traveled
    in a set direction for a defined distance. Takes three arguments, in degrees:
 
@@ -178,7 +178,7 @@
                                       (* (Math/sin phi-1) (Math/sin phi-2)))))]
     {:lat (rad->deg phi-2) :lon (rad->deg lam-2) :alt 0}))
 
-(defn view-outline
+(defn horizon-outline
   "Build a list of points outlining a satellite's field-of-view. Takes the
    arguments:
 
@@ -189,7 +189,7 @@
    contains the keys `:lat :lon :alt` in degrees and meters respectively."
   [{:keys [lat lon alt] :as satellite} degree-sep]
   (let [bearing-list (range 0 360 degree-sep)
-        limit (horizon satellite {:lat 0 :alt 0})
+        limit (horizon satellite)
         outline-fn #(destination-point satellite % limit)]
     (map outline-fn bearing-list)))
 
@@ -318,14 +318,14 @@
 
    Returns the antenna look-angle as a map containing the keys:
 
-   > `:azimuth` - Antenna azimuth in degrees; zero is true north  
-   > `:elevation` - Antenna elevation in degrees above-the-horizon  
-   > `:range` - Distance between the earth-station and satellite, in meters  
-   > `:visible?` - `true` if the satellite is in view of the antenna"
+   > `:az` - Antenna azimuth in degrees; zero is true north  
+   > `:el` - Antenna elevation in degrees above-the-horizon  
+   > `:rng` - Distance between the earth-station and satellite, in meters  
+   > `:vis?` - `true` if the satellite is in view of the antenna"
   [{:keys [lat lon alt] :as earth-station} 
    {:keys [lat lon alt] :as satellite}]
   (let [az (azimuth earth-station satellite)
         el (elevation earth-station satellite)
         rng (distance earth-station satellite)
         vis? (pos? el)]
-    {:azimuth az :elevation el :range rng :visible? vis?}))
+    {:az az :el el :rng rng :vis? vis?}))
