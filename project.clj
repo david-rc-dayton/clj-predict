@@ -1,4 +1,4 @@
-(defproject clj-predict "0.0.1-SNAPSHOT"
+(defproject clj-predict "0.0.1"
   :description "Library for satellite propagation and other space maths."
   :url "https://github.com/david-rc-dayton/clj-predict"
   :license {:name "The MIT License (MIT)"
