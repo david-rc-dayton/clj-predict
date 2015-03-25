@@ -1,4 +1,5 @@
-(ns clj-predict.solar)
+(ns clj-predict.solar
+  "Calculate the position of the sun, relative to the Earth.")
 
 (def solar-properties
   "Orbital properties of the Earth relative to the Sun. Available keys for the

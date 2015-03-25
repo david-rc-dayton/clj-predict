@@ -1,4 +1,7 @@
 (ns clj-predict.propagation
+  "Clojure wrapper to the *predict4java*
+   [SGP4](http://en.wikipedia.org/wiki/Simplified_perturbations_models)
+   satellite ephemeris propagation library."
   (:import [uk.me.g4dpz.satellite SatelliteFactory TLE]))
 
 (defn str->tle

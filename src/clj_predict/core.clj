@@ -1,4 +1,6 @@
 (ns clj-predict.core
+  "Contains aliases to the most common *clj-predict* functions, and a few
+   unique functions that combine namespace capabilities."
   (:require [clj-predict.coordinates :as coord]
             [clj-predict.coverage :as cov]
             [clj-predict.propagation :as prop]

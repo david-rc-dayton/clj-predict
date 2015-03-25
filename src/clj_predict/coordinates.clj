@@ -1,4 +1,5 @@
-(ns clj-predict.coordinates)
+(ns clj-predict.coordinates
+  "Coordinate operations and transforms.")
 
 (def wgs84 
   "Parameters in the *1984 World Geodetic System (WGS84)* defining the
