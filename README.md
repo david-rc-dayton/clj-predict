@@ -14,8 +14,10 @@ Repository: https://clojars.org/clj-predict
 
 *clj-predict* uses the
 [predict4java](https://github.com/badgersoftdotcom/predict4java) library for
-propagating satellite ephemeris from [Two-line Element Sets (TLEs)](http://en.wikipedia.org/wiki/Two-line_element_set). Current satellite TLEs can
-be found on the [CelesTrak](https://celestrak.com/) website.
+propagating satellite ephemeris from
+[Two-line Element Sets (TLEs)](http://en.wikipedia.org/wiki/Two-line_element_set).
+Current satellite TLEs can be found on the [CelesTrak](https://celestrak.com/)
+website.
 
 ## License
 

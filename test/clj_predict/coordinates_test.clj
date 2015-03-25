@@ -113,3 +113,15 @@
            [[0 38 37910]   [35 21 39352]  [90 38 37923]  [144 21 39352]
             [180 38 37910] [215 21 39352] [270 38 37923] [324 21 39352]]))))
 
+(deftest aspect
+  (let [org-pt-one {:lat 14 :lon -27 :alt 35786000}
+        fst-pt-one {:lat 0  :lon 0   :alt 25}
+        snd-pt-one {:lat 20 :lon 25  :alt 2000}
+        org-pt-two {:lat -10 :lon 35 :alt 12000}
+        fst-pt-two {:lat 12  :lon 170   :alt 2500}
+        snd-pt-two {:lat -45 :lon 25  :alt 800}]
+    (is (= (aspect-angle org-pt-one fst-pt-one snd-pt-one)
+           4.70726464352193))
+    (is (= (aspect-angle org-pt-two fst-pt-two snd-pt-two)
+           79.9920611776812))))
+

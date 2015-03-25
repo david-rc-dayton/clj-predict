@@ -1,7 +1,7 @@
 (ns clj-predict.propagation
   (:import [uk.me.g4dpz.satellite SatelliteFactory TLE]))
 
-(defn ^{:private true} str->tle
+(defn str->tle
   "Convert a *Two Line Element (TLE)* set, into a usable `predict4java` TLE
    object. Takes a single vector containing text strings of the form
    `[name first-line second-line]` where:
