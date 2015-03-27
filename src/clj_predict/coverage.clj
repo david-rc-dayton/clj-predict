@@ -2,13 +2,10 @@
   "Matrix generation functions for satellite coverage analysis.")
 
 (defn combine-matrix
-  "Add matrices `a` and `b`. Matrices are entered as a two-dimensional list of
-   lists of equal size, e.g:
+  "Add matrices `a` and `b`. A matrix is entered as a two-dimensional nested
+   vector; the number of rows and columns in `a` and `b` must be equal.
 
-   > `[[1 0 0] [0 1 0] [0 0 1]]`
-   > `[[1 2 3] [4 5 6] [7 8 9]]`
-
-   Returns the sum of the two matrices, as a list of lists."
+   Returns the sum of the two matrices, as a two-dimensional nested vector."
   [a b]
   (loop [n 0 output []]
     (if (= n (count a))
