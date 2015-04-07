@@ -83,6 +83,11 @@
           (recur (rest m) (conj o rep)))))))
 
 (defn coverage-combined
-  [method satellites [width height :as dimensions]]
+  [method locations [width height :as dimensions]]
   (let [cov-fn #(coverage-matrix method % dimensions)]
-    (reduce combine-matrix (map cov-fn satellites))))
+    (reduce combine-matrix (map cov-fn locations))))
+
+(defn coverage-indexed
+  [method locations [width height :as dimensions]]
+  (let [cov-fn #(coverage-matrix method % dimensions)]
+    (zipmap (range) (map cov-fn locations))))
