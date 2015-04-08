@@ -19,8 +19,8 @@
 (defn rangef
   [start end step]
   (map #(+ start (* % step))
-       (range 0 (/ (Math/abs (- end start))
-                   (Math/abs step)) 1)))
+       (range 0 (/ (Math/abs ^double (- end start))
+                   (Math/abs ^double step)) 1)))
 
 (defn cov-cosine
   [phi-1 lam-1 phi-2 lam-2]
@@ -57,16 +57,16 @@
 
 (defn combine-matrix
   "Add matrices `a` and `b`. A matrix is entered as a two-dimensional nested
-   vector; the number of rows and columns in `a` and `b` must be equal.
+   list; the number of rows and columns in `a` and `b` must be equal.
 
-   Returns the sum of the two matrices, as a two-dimensional nested vector."
+   Returns the sum of the two matrices, as a two-dimensional nested list."
   [a b]
   (loop [n 0 output []]
     (if (= n (count a))
       output
       (let [a-line (nth a n)
             b-line (nth b n)]
-        (recur (inc n) (conj output (vec (map + a-line b-line))))))))
+        (recur (inc n) (conj output (map + a-line b-line)))))))
 
 (defn coverage-matrix
   [method {:keys [lat lon alt] :as satellite} [width height :as dimensions]]
