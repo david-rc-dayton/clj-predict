@@ -10,6 +10,12 @@
    3 "% " 4 "+ " 5 "V "
    :default "@ "})
 
+ (defn rand-vec
+   []
+   {:lat (- (rand-int 180) 90)
+    :lon (- (rand-int 360) 180)
+    :alt (rand-int 35786000)})
+
 (defn print-matrix
   [m]
   (let [replace-fn #(or (get ascii-legend %) (:default ascii-legend))
@@ -23,9 +29,9 @@
                    (Math/abs ^double step)) 1)))
 
 (defn cov-cosine
-  [phi-1 lam-1 phi-2 lam-2]
-  (let [delta-phi-two (-> (Math/sin (/ (- phi-2 phi-1) 2)) (Math/pow 2))
-        delta-lam-two (-> (Math/sin (/ (- lam-2 lam-1) 2)) (Math/pow 2))
+  [^double phi-1 ^double lam-1 ^double phi-2 ^double lam-2]
+  (let [delta-phi-two (-> (Math/sin (/ (- phi-2 phi-1) 2.0)) (Math/pow 2.0))
+        delta-lam-two (-> (Math/sin (/ (- lam-2 lam-1) 2.0)) (Math/pow 2.0))
         a (+ delta-phi-two (* (Math/cos phi-1) (Math/cos phi-2) delta-lam-two))]
     (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))
 
@@ -53,7 +59,7 @@
   (let [step-width (/ two-pi width)
         step-height (/ pi height)
         lon (rangef (- pi) pi step-width)]
-    (for [lat (rangef (- half-pi) half-pi step-height)] [lat lon])))
+    (for [lat (rangef (- half-pi) half-pi step-height)] (list lat lon))))
 
 (defn combine-matrix
   "Add matrices `a` and `b`. A matrix is entered as a two-dimensional nested
@@ -85,8 +91,3 @@
   [method locations [width height :as dimensions]]
   (let [cov-fn #(coverage-matrix method % dimensions)]
     (reduce combine-matrix (map cov-fn locations))))
-
-(defn coverage-indexed
-  [method locations [width height :as dimensions]]
-  (let [cov-fn #(coverage-matrix method % dimensions)]
-    (zipmap (range) (map cov-fn locations))))
