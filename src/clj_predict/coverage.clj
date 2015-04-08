@@ -23,18 +23,17 @@
                    (Math/abs step)) 1)))
 
 (defn cov-cosine
-  [^double phi-1 ^double lam-1 ^double phi-2 ^double lam-2]
+  [phi-1 lam-1 phi-2 lam-2]
   (let [delta-phi-two (-> (Math/sin (/ (- phi-2 phi-1) 2)) (Math/pow 2))
         delta-lam-two (-> (Math/sin (/ (- lam-2 lam-1) 2)) (Math/pow 2))
-        a (+ delta-phi-two
-             (* (Math/cos phi-1) (Math/cos phi-2) delta-lam-two))]
+        a (+ delta-phi-two (* (Math/cos phi-1) (Math/cos phi-2) delta-lam-two))]
     (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))
 
 (def cov-methods
   {:cosine cov-cosine})
 
 (defn view-fn
-  [method {:keys [^double lat ^double lon ^double alt]}]
+  [method {:keys [lat lon alt]}]
   (fn [gnd-lat gnd-lon]
     (let [sat-lat (* lat (/ pi 180))
           sat-lon (* lon (/ pi 180))
