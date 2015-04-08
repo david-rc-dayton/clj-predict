@@ -51,9 +51,9 @@
    `[latitude [longitudes]]`, in radians."
   [[width height :as dimensions]]
   (let [step-width (/ two-pi width)
-        step-height (- (/ pi height))
+        step-height (/ pi height)
         lon (rangef (- pi) pi step-width)]
-    (for [lat (rangef half-pi (- half-pi) step-height)] [lat lon])))
+    (for [lat (rangef (- half-pi) half-pi step-height)] [lat lon])))
 
 (defn combine-matrix
   "Add matrices `a` and `b`. A matrix is entered as a two-dimensional nested
@@ -61,7 +61,7 @@
 
    Returns the sum of the two matrices, as a two-dimensional nested list."
   [a b]
-  (loop [n 0 output []]
+  (loop [n 0 output (list)]
     (if (= n (count a))
       output
       (let [a-line (nth a n)
@@ -72,7 +72,7 @@
   [method {:keys [lat lon alt] :as satellite} [width height :as dimensions]]
   (let [matrix (blank-matrix dimensions)
         in-view? (view-fn method satellite)]
-    (loop [m matrix o []]
+    (loop [m matrix o (list)]
       (if (empty? m)
         o
         (let [row  (first m)

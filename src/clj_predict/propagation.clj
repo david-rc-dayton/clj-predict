@@ -29,7 +29,7 @@
    Returns `true` if the TLE vector appears properly formatted and passes a
    checksum."
   [[name first-line second-line :as tle]]
-  (let [char->int #(Character/getNumericValue ^java.lang.Character %)
+  (let [char->int #(Character/getNumericValue ^char %)
         digits (set (map char (range 48 58)))
         replace-dash #(clojure.string/replace % "-" "1")
         valid? #(= (mod (reduce + (butlast %)) 10) (last %))
