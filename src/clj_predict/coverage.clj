@@ -10,11 +10,11 @@
    3 "% " 4 "+ " 5 "V "
    :default "@ "})
 
- (defn rand-vec
-   []
-   {:lat (- (rand-int 180) 90)
-    :lon (- (rand-int 360) 180)
-    :alt (rand-int 35786000)})
+(defn doall-recur [s]
+  (if (seq? s)
+    (doall (map doall-recur
+                s))
+    s))
 
 (defn print-matrix
   [m]
@@ -40,13 +40,12 @@
 
 (defn view-fn
   [method {:keys [lat lon alt]}]
-  (fn [gnd-lat gnd-lon]
-    (let [sat-lat (* lat (/ pi 180))
-          sat-lon (* lon (/ pi 180))
-          view-limit (Math/acos (/ 6371000 (+ 6371000 alt)))
-          view-method (get cov-methods method)]
-      (if (<= (view-method sat-lat sat-lon gnd-lat gnd-lon) view-limit)
-        1 0))))
+  (let [sat-lat (* lat (/ pi 180))
+        sat-lon (* lon (/ pi 180))
+        view-limit (Math/acos (/ 6371000 (+ 6371000 alt)))
+        view-method (get cov-methods method)]
+    (fn [gnd-lat gnd-lon]
+      (if (<= (view-method sat-lat sat-lon gnd-lat gnd-lon) view-limit) 1 0))))
 
 (defn blank-matrix
   "Generate a blank coverage matrix. Takes the argument:
@@ -59,7 +58,7 @@
   (let [step-width (/ two-pi width)
         step-height (/ pi height)
         lon (rangef (- pi) pi step-width)]
-    (for [lat (rangef (- half-pi) half-pi step-height)] (list lat lon))))
+    (for [lat (rangef half-pi (- half-pi) (- step-height))] (list lat lon))))
 
 (defn combine-matrix
   "Add matrices `a` and `b`. A matrix is entered as a two-dimensional nested
@@ -77,15 +76,9 @@
 (defn coverage-matrix
   [method {:keys [lat lon alt] :as satellite} [width height :as dimensions]]
   (let [matrix (blank-matrix dimensions)
-        in-view? (view-fn method satellite)]
-    (loop [m matrix o (list)]
-      (if (empty? m)
-        o
-        (let [row  (first m)
-              phi  (first row)
-              lams (second row)
-              rep  (map (partial in-view? phi) lams)]
-          (recur (rest m) (conj o rep)))))))
+        in-view? (view-fn method satellite)
+        cov-fn #(map in-view? (repeat (first %)) (second %))]
+    (map cov-fn matrix)))
 
 (defn coverage-combined
   [method locations [width height :as dimensions]]
