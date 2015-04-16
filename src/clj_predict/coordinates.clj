@@ -42,8 +42,8 @@
   (let [phi (deg->rad lat)
         a (:semi-major-axis wgs84)
         b (:semi-minor-axis wgs84)]
-    (-> (/ (+ (* (Math/pow (* a a (Math/cos phi)) 2))
-              (* (Math/pow (* b b (Math/sin phi)) 2)))
+    (-> (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
+              (Math/pow (* b b (Math/sin phi)) 2))
            (+ (Math/pow (* a (Math/cos phi)) 2)
               (Math/pow (* b (Math/sin phi)) 2)))
       (Math/sqrt))))
@@ -85,9 +85,9 @@
         p2 (deg->rad (:lat end-point))
         delta-l (deg->rad (- (:lon end-point) 
                              (:lon start-point)))]
-    (rad->deg (Math/acos (* (+ (* (Math/sin p1) (Math/sin p2))
-                               (* (Math/cos p1) (Math/cos p2) 
-                                  (Math/cos delta-l))))))))
+    (rad->deg (Math/acos (+ (* (Math/sin p1) (Math/sin p2))
+                            (* (Math/cos p1) (Math/cos p2) 
+                               (Math/cos delta-l)))))))
 
 (defn adist-equirect
   "Calculate angular distance, in degrees, between two points on the Earth's

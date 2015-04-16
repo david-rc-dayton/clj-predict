@@ -4,6 +4,8 @@
   :license {:name "The MIT License (MIT)"
             :url "http://opensource.org/licenses/MIT"
             :distribution :repo}
+  :jvm-opts ["-Xverify:none"]
+  :bootclasspath true
   :deploy-repositories {"clojars" {:sign-releases false}}
   :dependencies [[org.clojure/clojure "1.7.0-beta1"]
                  [uk.me.g4dpz/predict4java "1.1.3"]]
