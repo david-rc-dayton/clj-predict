@@ -15,7 +15,7 @@
 
    Returns a `predict4java` TLE object for use with the SGP4 propagator."
   [[name first-line second-line :as tle]]
-  (TLE. ^"[Ljava.lang.String;" (into-array String tle)))
+  (TLE. (into-array String tle)))
 
 (defn valid-tle?
   "Determine if a *Two Line Element Set (TLE)* is valid based on the checksum
@@ -29,16 +29,16 @@
    Returns `true` if the TLE vector appears properly formatted and passes a
    checksum."
   [[name first-line second-line :as tle]]
-  (let [char->int #(Character/getNumericValue ^char %)
+  (let [char->int #(Character/getNumericValue %)
         digits (set (map char (range 48 58)))
         replace-dash #(clojure.string/replace % "-" "1")
         valid? #(= (mod (reduce + (butlast %)) 10) (last %))
         tle-clean (->> (map replace-dash (rest tle))
                     (map #(filter digits (apply vector %)))
                     (map #(map char->int (apply vector %))))]
-    (and (not (clojure.string/blank? (.trim ^java.lang.String name)))
-         (not (clojure.string/blank? (.trim ^java.lang.String first-line)))
-         (not (clojure.string/blank? (.trim ^java.lang.String second-line)))
+    (and (not (clojure.string/blank? (.trim name)))
+         (not (clojure.string/blank? (.trim first-line)))
+         (not (clojure.string/blank? (.trim second-line)))
          (every? true? (map valid? tle-clean)))))
 
 (defn propagate

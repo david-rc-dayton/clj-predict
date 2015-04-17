@@ -19,7 +19,7 @@
    a `java.util.Date` object for the starting time as its only argument.
 
    Returns a floating point representation of elapsed time in the UTC timezone."
-  [^java.util.Date date]
+  [date]
   (let [cal (doto (java.util.Calendar/getInstance
                     (java.util.TimeZone/getTimeZone "UTC"))
               (.setTime date))
@@ -35,7 +35,7 @@
    only argument.
 
    Returns the Sun's latitude at the given time, in degrees."
-  [^java.util.Date date]
+  [date]
   (let [d (+ (day-of-year date)
              (+ (* (:orbital-period solar-properties) 3/4) 10))
         r (/ (* 2 Math/PI) (:orbital-period solar-properties))
