@@ -4,11 +4,8 @@
   :license {:name "The MIT License (MIT)"
             :url "http://opensource.org/licenses/MIT"
             :distribution :repo}
-  :jvm-opts ["-Xverify:none"]
-  :bootclasspath true
   :deploy-repositories {"clojars" {:sign-releases false}}
-  :dependencies [[org.clojure/clojure "1.7.0-beta1"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
                  [uk.me.g4dpz/predict4java "1.1.3"]]
-  :global-vars {*unchecked-math* :warn-on-boxed}
   :profiles {:dev {:plugins [[codox "0.8.11"]]
                    :codox {:defaults {:doc/format :markdown}}}})
