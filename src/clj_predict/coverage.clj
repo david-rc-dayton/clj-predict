@@ -6,7 +6,7 @@
 (def half-pi (/ pi 2))
 
 (def ascii-legend
-  {0 ". " 1 "- " 2 "= "
+  {0 ". " 1 ": " 2 "= "
    3 "% " 4 "+ " 5 "V "
    :default "@ "})
 
