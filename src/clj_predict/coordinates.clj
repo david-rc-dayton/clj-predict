@@ -150,45 +150,6 @@
     (let [limit (horizon observer)]
       (<= (adist-fn observer point) limit))))
 
-(defn destination-point
-  "Calculate the destination from a point on the Earth's surface when traveled
-   in a set direction for a defined distance. Takes three arguments, in degrees:
-
-   > `start-point` - Map of the `:lat :lon` for the start point  
-   > `bearing` - Direction of travel in degrees (0 to 360); zero is true north  
-   > `angular-distance` - Angular distance of travel, in degrees
-
-   Outputs a map containing the keys `{:lat :lon :alt}` for the
-   end point, in degrees."
-  [{:keys [lat lon] :as start-point} bearing angular-distance]
-  (let [phi-1 (deg->rad lat)
-        lam-1 (deg->rad lon)
-        theta (deg->rad bearing)
-        sigma (deg->rad angular-distance)
-        phi-2 (Math/asin (+ (* (Math/sin phi-1) (Math/cos sigma))
-                            (* (Math/cos phi-1) (Math/sin sigma)
-                               (Math/cos theta))))
-        lam-2 (+ lam-1 (Math/atan2 (* (Math/sin theta) (Math/sin sigma)
-                                      (Math/cos phi-1))
-                                   (- (Math/cos sigma)
-                                      (* (Math/sin phi-1) (Math/sin phi-2)))))]
-    {:lat (rad->deg phi-2) :lon (rad->deg lam-2) :alt 0}))
-
-(defn horizon-outline
-  "Build a list of points outlining a satellite's field-of-view. Takes the
-   arguments:
-
-   > `satellite` - Map of keys `:lat :lon :alt` for the satellite location  
-   > `degree-sep` - Degrees of radial separation from nadir between points
-
-   Returns a list of points outlining the satellite's field-of-view; each point
-   contains the keys `:lat :lon :alt` in degrees and meters respectively."
-  [{:keys [lat lon alt] :as satellite} degree-sep]
-  (let [bearing-list (range 0 360 degree-sep)
-        limit (horizon satellite)
-        outline-fn #(destination-point satellite % limit)]
-    (map outline-fn bearing-list)))
-
 (defn geodetic->ecf
   "Convert a map of Geodetic coordinates to Earth Centered Fixed (ECF)
    coordinates. Takes a map containing `:lat :lon :alt` keys, with values in

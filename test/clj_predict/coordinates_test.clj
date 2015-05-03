@@ -83,9 +83,7 @@
     (is (= (count (filter #(surface-visible? % org adist-cosine) geo-perm))
            1005))
     (is (= (count (filter #(surface-visible? % org adist-equirect) geo-perm))
-           953))
-    (is (= (vec (map #(vec (map v-fn (horizon-outline % 45))) eq-points))
-           out-eq))))
+           953))))
 
 (deftest coordinate-convert
   (let [ecf-pts (map geodetic->ecf geo-perm)
