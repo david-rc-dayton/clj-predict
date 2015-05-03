@@ -60,12 +60,32 @@
         a (+ delta-phi-two (* (Math/cos phi-1) (Math/cos phi-2) delta-lam-two))]
     (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))
 
+(defn cov-haversine
+  "Calculate the angular distance between two points using the
+   *Haversine Formula*. Takes four arguments, in radians:
+
+   > `phi-1` - latitude of the starting point  
+   > `lam-1` - longitude of the starting point  
+   > `phi-2` - latitude of the ending point  
+   > `lam-2` - longitude of the ending point
+
+   Returns the angular distance between two points in radians."
+  [phi-1 lam-1 phi-2 lam-2]
+  (let [delta-phi (Math/sin (* 0.5 (- phi-2 phi-1)))
+        delta-lam (Math/sin (* 0.5 (- lam-2 lam-1)))
+        a (+ (* delta-phi delta-phi)
+             (* (Math/cos phi-1) (Math/cos phi-2)
+                delta-lam delta-lam))]
+    (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))
+
 (def cov-methods
   "Map associating keywords with a method of coverage calculation. Available
    methods are:
 
-   > `:cosine` - *Law of Cosines* (fast)"
-  {:cosine cov-cosine})
+   > `:cosine` - *Law of Cosines* (fast)  
+   > `:haversine - *Haversine Formula* (slow)"
+  {:cosine    cov-cosine
+   :haversine cov-haversine})
 
 (defn view-fn
   "Generates a function with cached values for coverage calculation, for faster
