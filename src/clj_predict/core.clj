@@ -54,6 +54,13 @@
   [& rest]
   (apply coord/look-angle rest))
 
+;;;; clj-predict.coverage ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn print-coverage-matrix
+  "Alias for `clj-predict.coverage/print-coverage-matrix`."
+  [& rest]
+  (apply cov/print-coverage-matrix rest))
+
 ;;;; clj-predict.propagation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn valid-tle?
@@ -134,3 +141,21 @@
         ear-pos (coord/ecf->geodetic {:xf 0 :yf 0 :zf 0})
         sol-pos (sol/solar-position date)]
     (coord/aspect-angle sat-pos ear-pos sol-pos)))
+
+(defn coverage-matrix
+  "Generates a matrix of a single, or multiple satellites' coverage over the
+   Earth's surface. Takes three arguments:
+
+   > `method` - keyword from `clj-predict.coverage/cov-methods`  
+   > `sat-locations` - satellite location map (individual, or a list of maps)  
+   > `dimensions` - a vector containing the width & height of the output matrix
+
+   Returns a matrix representing combined global satellite coverage from
+   [-90 90] degrees latitude and [-180 180] degrees longitude, centered at the
+   Equator and the Prime Meridian respectively. Elements contain the number of
+   satellites in view of the associated region."
+  [method sat-location dimensions]
+  (let [cov-fn (cond
+                 (map? sat-location)  cov/coverage-matrix
+                 (coll? sat-location) cov/coverage-combined)]
+    (cov-fn method sat-location dimensions)))

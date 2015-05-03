@@ -15,13 +15,13 @@
   (/ pi 2))
 
 (def ascii-legend
-  "Map containing the legend of characters for use in the `print-matrix`
+  "Map containing the legend of characters for use in the `print-coverage-matrix`
    function. Default coverage levels are indicated by:
 
    > `.` - 0 , `:` - 1, `=` - 2 , `%` - 3, `+` - 4, `V` - 5 , `@` - 6+"
   {0 ". " 1 ": " 2 "= " 3 "% " 4 "+ " 5 "V " :default "@ "})
 
-(defn print-matrix
+(defn print-coverage-matrix
   "Format and print coverage matrix `m` to the output stream assigned to
    &#42;out&#42; (typically *stdout*). Characters indicating the amount of
    coverage at a given point are defined in the `ascii-legend` map."
@@ -109,12 +109,7 @@
 
    Returns the sum of the two matrices, as a two-dimensional nested list."
   [a b]
-  (loop [n 0 output (list)]
-    (if (= n (count a))
-      output
-      (let [a-line (nth a n)
-            b-line (nth b n)]
-        (recur (inc n) (conj output (map + a-line b-line)))))))
+  (map #(map + %1 %2) a b))
 
 (defn coverage-matrix
   "Generates a matrix of a satellite's coverage over the Earth's surface. Takes
