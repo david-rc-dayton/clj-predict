@@ -29,16 +29,6 @@
   [& rest]
   (apply coord/horizon rest))
 
-(defn destination-point
-  "Alias for `clj-predict.coordinates/destination-point`."
-  [& rest]
-  (apply coord/destination-point rest))
-
-(defn horizon-outline
-  "Alias for `clj-predict.coordinates/horizon-outline`."
-  [& rest]
-  (apply coord/horizon-outline rest))
-
 (defn geodetic->ecf
   "Alias for `clj-predict.coordinates/geodetic->ecf`."
   [& rest]
