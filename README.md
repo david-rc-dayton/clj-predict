@@ -5,7 +5,7 @@ propagation and other space maths. To use *clj-predict* with your
 [Leiningen](http://leiningen.org/) project, include the following in the
 `:dependencies` portion of your application's `project.clj` file:
 
-    [clj-predict "0.0.2"]
+    [clj-predict "0.0.3"]
 
 Documentation: http://david-rc-dayton.github.io/clj-predict/  
 Repository: https://clojars.org/clj-predict
