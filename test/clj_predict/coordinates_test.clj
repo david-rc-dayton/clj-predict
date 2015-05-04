@@ -42,32 +42,18 @@
            [6356752.314245179 6367489.543863465 
             6378137.0         6367489.543863465]))))
 
-(deftest angular-distance
-  (is (= (vec (map #(int (adist-haversine org %)) points))
+(deftest adist
+  (is (= (vec (map #(int (angular-distance :haversine org %)) points))
          [45 60 45 60 45 60 45 60]))
-  (is (= (vec (map #(int (adist-cosine org %)) points))
+  (is (= (vec (map #(int (angular-distance :cosine org %)) points))
          [45 59 45 59 45 59 45 59]))
-  (is (= (vec (map #(int (adist-equirect org %)) points)) 
+  (is (= (vec (map #(int (angular-distance :equirect org %)) points)) 
          [45 61 45 61 45 61 45 61])))
 
 (deftest distance-to-horizon
   (is (= (vec (map #(int (horizon %)) locations))
          [12 40 81 12 40 81 12 40 81 12 40 81
           12 40 81 12 40 81 12 40 81 12 40 81])))
-
-(deftest angular-diameter
-  (is (= (adiam-sphere (:dist (:sun bodies)) (:diam (:sun bodies)))
-         0.5331360161562749))
-  (is (= (adiam-sphere (:dist (:moon bodies)) (:diam (:moon bodies)))
-         0.5178399445635666))
-  (is (= (adiam-sphere (:dist (:geo bodies)) (:diam (:geo bodies)))
-         20.51012765215461))
-  (is (= (adiam-disc (:dist (:sun bodies)) (:diam (:sun bodies)))
-         0.5331302462100577))
-  (is (= (adiam-disc (:dist (:moon bodies)) (:diam (:moon bodies)))
-         0.517834657132248))
-  (is (= (adiam-disc (:dist (:geo bodies)) (:diam (:geo bodies)))
-         20.189268988276787)))
 
 (deftest satellite-view
   (let [eq-points (for [alt altitudes] (merge {:lat 0 :lon 0} alt))
@@ -78,12 +64,32 @@
                 [[81 0]    [44 77]   [0 81]    [-44 77]
                  [-81 0]   [-44 -77] [0 -81]   [44 -77]]]
         v-fn (fn [x] (vector (int (:lat x)) (int (:lon x))))]
-    (is (= (count (filter #(surface-visible? % org adist-haversine) geo-perm))
+    (is (= (count (filter #(surface-visible? :haversine % org) geo-perm))
            1005))
-    (is (= (count (filter #(surface-visible? % org adist-cosine) geo-perm))
+    (is (= (count (filter #(surface-visible? :cosine % org) geo-perm))
            1005))
-    (is (= (count (filter #(surface-visible? % org adist-equirect) geo-perm))
+    (is (= (count (filter #(surface-visible? :equirect % org) geo-perm))
            953))))
+
+(deftest adiam
+  (is (= (angular-diameter
+           :sphere (:dist (:sun bodies)) (:diam (:sun bodies)))
+         0.5331360161562749))
+  (is (= (angular-diameter
+           :sphere (:dist (:moon bodies)) (:diam (:moon bodies)))
+         0.5178399445635666))
+  (is (= (angular-diameter
+           :sphere (:dist (:geo bodies)) (:diam (:geo bodies)))
+         20.51012765215461))
+  (is (= (angular-diameter
+           :disc (:dist (:sun bodies)) (:diam (:sun bodies)))
+         0.5331302462100577))
+  (is (= (angular-diameter
+           :disc (:dist (:moon bodies)) (:diam (:moon bodies)))
+         0.517834657132248))
+  (is (= (angular-diameter
+           :disc (:dist (:geo bodies)) (:diam (:geo bodies)))
+         20.189268988276787)))
 
 (deftest coordinate-convert
   (let [ecf-pts (map geodetic->ecf geo-perm)
@@ -122,4 +128,3 @@
            4.70726464352193))
     (is (= (aspect-angle org-pt-two fst-pt-two snd-pt-two)
            79.9920611776812))))
-

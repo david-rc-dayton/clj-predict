@@ -15,18 +15,31 @@
   (/ pi 2))
 
 (def ascii-legend
-  "Map containing the legend of characters for use in the `print-coverage-matrix`
-   function. Default coverage levels are indicated by:
+  "Map containing the legend of characters for use in the
+   `print-coverage-matrix` function."
+  (let [k [0   1   2   3   4   5   :default]
+        v ["." ":" "=" "%" "+" "V" "@"]]
+    (atom (zipmap k (map #(str % " ") v)))))
 
-   > `.` - 0 , `:` - 1, `=` - 2 , `%` - 3, `+` - 4, `V` - 5 , `@` - 6+"
-  {0 ". " 1 ": " 2 "= " 3 "% " 4 "+ " 5 "V " :default "@ "})
+(defn merge-ascii-legend!
+  "Merge the current `ascii-legend` with a new character map, for use in the
+   `print-coverage-matrix` function. For example:
+
+   Use the *&* and *$* symbols for cells in view of 8 and 9 satellites:  
+   > `(merge-ascii-legend! {8 \"&\", 9 \"$\"})`
+
+   Change the default symbol for coverage not defined in `ascii-legend` to *?*:  
+   > `(merge-ascii-legend! {:default \"?\"})`"
+  [merge-map]
+  (swap! ascii-legend merge
+         (zipmap (keys merge-map) (map #(str % " ") (vals merge-map)))))
 
 (defn print-coverage-matrix
   "Format and print coverage matrix `m` to the output stream assigned to
    &#42;out&#42; (typically *stdout*). Characters indicating the amount of
    coverage at a given point are defined in the `ascii-legend` map."
   [m]
-  (let [replace-fn #(or (get ascii-legend %) (:default ascii-legend))
+  (let [replace-fn #(or (get @ascii-legend %) (:default @ascii-legend))
         str-fn #(apply str (map replace-fn %))]
     (dorun (map #(println (str-fn %)) m))))
 
@@ -83,7 +96,7 @@
    methods are:
 
    > `:cosine` - *Law of Cosines* (fast)  
-   > `:haversine - *Haversine Formula* (slow)"
+   > `:haversine` - *Haversine Formula* (slow)"
   {:cosine    cov-cosine
    :haversine cov-haversine})
 
@@ -131,7 +144,7 @@
   [a b]
   (map #(map + %1 %2) a b))
 
-(defn coverage-matrix
+(defn coverage-single
   "Generates a matrix of a satellite's coverage over the Earth's surface. Takes
    three arguments:
 
@@ -162,5 +175,23 @@
    Equator and the Prime Meridian respectively. Elements contain the number of
    satellites in view of the associated region."
   [method sat-locations dimensions]
-  (let [cov-fn #(coverage-matrix method % dimensions)]
+  (let [cov-fn #(coverage-single method % dimensions)]
     (reduce combine-matrix (map cov-fn sat-locations))))
+
+(defn coverage-matrix
+  "Generates a matrix of a single, or multiple satellites' coverage over the
+   Earth's surface. Takes three arguments:
+
+   > `method` - keyword from `clj-predict.coverage/cov-methods`  
+   > `sat-locations` - satellite location map (individual, or a list of maps)  
+   > `dimensions` - a vector containing the width & height of the output matrix
+
+   Returns a matrix representing combined global satellite coverage from
+   [-90 90] degrees latitude and [-180 180] degrees longitude, centered at the
+   Equator and the Prime Meridian respectively. Elements contain the number of
+   satellites in view of the associated region."
+  [method sat-location dimensions]
+  (let [cov-fn (cond
+                 (map? sat-location)  coverage-single
+                 (coll? sat-location) coverage-combined)]
+    (cov-fn method sat-location dimensions)))

@@ -105,6 +105,30 @@
         y (- (:lat end-point) (:lat start-point))]
     (Math/sqrt (+ (* x x) (* y y)))))
 
+(def adist-methods
+  "Map associating keywords with a method of angular distance calculation.
+   Available methods are:
+
+   > `:haversine` - *Haversine Formula* (slow)  
+   > `:cosine` - *Law of Cosines* (fast)  
+   > `:equirect` - *Equirectangular Approximation* (fastest)"
+  {:haversine adist-haversine
+   :cosine    adist-cosine
+   :equirect  adist-equirect})
+
+(defn angular-distance
+  "Calculate angular distance, in degrees, between two points on the Earth's
+   surface. Takes a keyword, and two maps, with values in degrees, as arguments:
+
+   > `method` - calculation method (see `adist-methods`)  
+   > `start-point` - Map containing the `:lat :lon` for the start point  
+   > `end-point` - Map containing the `:lat :lon` for the end point
+
+   Returns the angular distance between the two points in degrees."
+  [method {:keys [lat lon] :as start-point} {:keys [lat lon] :as end-point}]
+  (let [adist-fn (get adist-methods method)]
+    (adist-fn start-point end-point)))
+
 (defn horizon
   "Calculate the angular distance to horizon from an observer above the Earth's
    surface. Takes one argument, a map of the observer's `:lat :alt` in degrees
@@ -115,6 +139,21 @@
   [{:keys [lat alt] :as observer}]
   (let [r (geo-radius observer)]
     (rad->deg (Math/acos (/ r (+ r alt))))))
+
+(defn surface-visible?
+  "Calculate the visibility of a point on the Earth's surface from a satellite
+   observer. Takes the arguments:
+
+   > `method` - keyword for the method of calculation (see `adist-methods`)  
+   > `observer` - Map with keys `:lat :lon :alt` for the observer's location  
+   > `point` - Map with keys `:lat :lon` for the point's location
+
+   Returns `true` if the point on the Earth's surface is visible from the
+   observer."
+  [method {:keys [lat lon alt] :as observer} {:keys [lat lon] :as point}]
+  (let [adist-fn (get adist-methods method)
+        limit (horizon observer)]
+    (<= (adist-fn observer point) limit)))
 
 (defn adiam-sphere
   "Calculate the angular diameter of a sphere, given the `distance` from the
@@ -136,19 +175,30 @@
   [distance diameter]
   (rad->deg (* 2 (Math/atan (/ diameter (* 2 distance))))))
 
-(defn surface-visible?
-  "Calculate the visibility of a point on the Earth's surface from a satellite
-   observer. Takes the arguments:
+(def adiam-methods
+  "Map associating keywords with a method of angular diameter calculation.
+   Available methods are:
 
-   > `observer` - Map with keys `:lat :lon :alt` for the observer's location  
-   > `point` - Map with keys `:lat :lon` for the point's location  
-   > `adist-fn` - Angular distance function (see `adist-*` functions)
+   > `:sphere` - round objects  
+   > `:disc` - flat objects"
+  {:sphere adiam-sphere
+   :disc   adiam-disc})
 
-   Returns `true` if the point on the Earth's surface is visible from the
-   observer."
-  ([{:keys [lat lon alt] :as observer} {:keys [lat lon] :as point} adist-fn]
-    (let [limit (horizon observer)]
-      (<= (adist-fn observer point) limit))))
+(defn angular-diameter
+  "Calculate the angular diameter of an object as viewed from an observer. Takes
+   three arguments:
+
+   > `shape` - Keyword of the object's shape (see `adiam-methods`)  
+   > `distance` - Distance from the observer to the center of the object  
+   > `diameter` - Actual diameter of the object being viewed
+
+   `distance` and `diameter` must have the same units.
+
+   Returns the angular diameter of the object, relative to the observer, in
+   degrees."
+  [shape distance diameter]
+  (let [adiam-fn (get adiam-methods shape)]
+    (adiam-fn distance diameter)))
 
 (defn geodetic->ecf
   "Convert a map of Geodetic coordinates to Earth Centered Fixed (ECF)

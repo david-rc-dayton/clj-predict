@@ -76,21 +76,21 @@
             [0 0 0 0 0 0 0 0 0 0]
             [0 0 0 0 0 0 0 0 0 0]
             [0 0 0 0 0 0 0 1 1 0]]))
-    (is (= (coverage-combined :cosine ev-loc cover-dim)
+    (is (= (coverage-matrix :cosine ev-loc cover-dim)
            [[0 0 0 0 0 0 0 0 0 0]
             [0 0 1 2 1 1 1 2 1 0]
             [0 0 0 1 1 1 1 1 0 0]
             [0 0 0 1 1 1 1 1 0 0]
             [0 0 1 2 1 1 1 2 1 0]]))
-    (is (= (coverage-matrix   :cosine    cn-loc cover-dim)
-           (coverage-matrix   :haversine cn-loc cover-dim)))
-    (is (= (coverage-matrix   :cosine    tl-loc cover-dim)
-           (coverage-matrix   :haversine tl-loc cover-dim)))
-    (is (= (coverage-matrix   :cosine    tr-loc cover-dim)
-           (coverage-matrix   :haversine tr-loc cover-dim)))
-    (is (= (coverage-matrix   :cosine    bl-loc cover-dim)
-           (coverage-matrix   :haversine bl-loc cover-dim)))
-    (is (= (coverage-matrix   :cosine    br-loc cover-dim)
-           (coverage-matrix   :haversine br-loc cover-dim)))
-    (is (= (coverage-combined :cosine    ev-loc cover-dim)
-           (coverage-combined :haversine ev-loc cover-dim)))))
+    (is (= (coverage-matrix :cosine    cn-loc cover-dim)
+           (coverage-matrix :haversine cn-loc cover-dim)))
+    (is (= (coverage-matrix :cosine    tl-loc cover-dim)
+           (coverage-matrix :haversine tl-loc cover-dim)))
+    (is (= (coverage-matrix :cosine    tr-loc cover-dim)
+           (coverage-matrix :haversine tr-loc cover-dim)))
+    (is (= (coverage-matrix :cosine    bl-loc cover-dim)
+           (coverage-matrix :haversine bl-loc cover-dim)))
+    (is (= (coverage-matrix :cosine    br-loc cover-dim)
+           (coverage-matrix :haversine br-loc cover-dim)))
+    (is (= (coverage-matrix :cosine    ev-loc cover-dim)
+           (coverage-matrix :haversine ev-loc cover-dim)))))
