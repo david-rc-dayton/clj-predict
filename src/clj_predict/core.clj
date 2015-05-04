@@ -1,5 +1,5 @@
 (ns clj-predict.core
-  "Contains aliases to the most common *clj-predict* functions."
+  "Contains aliases to common *clj-predict* functions."
   (:require [clj-predict.coordinates :as coord]
             [clj-predict.coverage :as cov]
             [clj-predict.propagation :as prop]
