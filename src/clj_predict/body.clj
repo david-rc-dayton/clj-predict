@@ -1,5 +1,6 @@
-(ns clj-predict.coordinates
-  "Coordinate operations and transforms.")
+(ns clj-predict.body
+  "Operations applicable to the Earth and other celestial bodies."
+  (:require [clj-predict.help :as help]))
 
 (defn geo-radius
   "Calculate Earth's geocentric radius for a map containing the key `:lat` in
@@ -121,7 +122,7 @@
    observer."
   [method {:keys [lat lon alt] :as observer} {:keys [lat lon] :as point}]
   (let [adist-fn (get adist-methods method)
-        limit (horizon observer)]
+        limit (distance-to-horizon observer)]
     (<= (adist-fn observer point) limit)))
 
 (defn adiam-sphere
@@ -168,61 +169,6 @@
   [shape distance diameter]
   (let [adiam-fn (get adiam-methods shape)]
     (adiam-fn distance diameter)))
-
-(defn geodetic->ecf
-  "Convert a map of Geodetic coordinates to Earth Centered Fixed (ECF)
-   coordinates. Takes a map containing `:lat :lon :alt` keys, with values in
-   degrees and meters as its only argument.
-
-   Returns a map containing ECF coordinates, with keys `:xf :yf :zf`, in
-   meters."
-  [{:keys [lat lon alt]}]
-  (let [phi (deg->rad lat)
-        lambda (deg->rad lon)
-        h alt
-        re (:semi-major-axis wgs84)
-        rp (:semi-minor-axis wgs84)
-        e-squared (:ecc-squared wgs84)
-        sin-phi (Math/sin phi)
-        n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-phi 2)))))]
-    {:xf (* (+ n h) (Math/cos phi) (Math/cos lambda))
-     :yf (* (+ n h) (Math/cos phi) (Math/sin lambda))
-     :zf (* (+ (* n (- 1 e-squared)) h) sin-phi)}))
-
-(defn ecf->geodetic
-  "Convert a map of Earth Centered Fixed (ECF) coordinates to a Geodetic
-   coordinates. Takes a map containing the keys `:xf :yf :zf`, with values in
-   meters, as its only argument.
-
-   Returns a map containing Geodetic coordinates, with keys `:lat :lon :alt`,
-   and values in degrees and meters."
-  [{:keys [xf yf zf]}]
-  (let [lambda (mod (Math/atan2 yf xf) (deg->rad 360))
-        p (Math/sqrt (+ (* xf xf) (* yf yf)))
-        rp (Math/sqrt (+ (* xf xf) (* yf yf) (* zf zf)))
-        l-sign (if (< zf 0) -1 1)
-        a (:semi-major-axis wgs84)
-        b (:semi-minor-axis wgs84)
-        e-squared (:ecc-squared wgs84)
-        epsilon 1e-10]
-    (if (< p epsilon)
-      {:lat (* l-sign 90) :lon (rad->deg lambda) :alt (- rp b)}
-      (loop [zi (* (- e-squared) zf)]
-        (let [zd (- zf zi)
-              n-plus-h (Math/sqrt (+ (* xf xf) (* yf yf) (* zd zd)))
-              sin-phi (/ zd n-plus-h)
-              n (/ a (Math/sqrt (- 1 (* e-squared sin-phi sin-phi))))
-              zi-next (* (- n) e-squared sin-phi)
-              delta-zi (Math/abs (- zi zi-next))]
-          (if (< delta-zi epsilon)
-            (let [nlam (rad->deg lambda)]
-              {:lat (rad->deg (Math/asin (/ zd n-plus-h)))
-               :lon (cond
-                      (> nlam 180)  (- nlam 360)
-                      (< nlam -180) (+ nlam 360)
-                      :else nlam)
-               :alt (- (Math/sqrt (+ (* xf xf) (* yf yf) (* zd zd))) n)})
-            (recur zi-next)))))))
 
 (defn azimuth
   "Calculate the azimuth between an earth-station and a satellite. Takes two

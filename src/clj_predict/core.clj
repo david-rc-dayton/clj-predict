@@ -1,46 +1,47 @@
 (ns clj-predict.core
   "Contains aliases to common *clj-predict* functions."
-  (:require [clj-predict.coordinates :as coord]
+  (:require [clj-predict.body :as bod]
             [clj-predict.coverage :as cov]
+            [clj-predict.helper :as help]
             [clj-predict.propagation :as prop]
             [clj-predict.solar :as sol]))
 
 ;;;; clj-predict.coordinates ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn geo-radius
-  "Alias for `clj-predict.coordinates/geo-radius`."
+  "Alias for `clj-predict.body/geo-radius`."
   [& rest]
-  (apply coord/geo-radius rest))
+  (apply bod/geo-radius rest))
 
 (defn angular-distance
-  "Alias for `clj-predict.coordinates/angular-distance`."
+  "Alias for `clj-predict.body/angular-distance`."
   [& rest]
-  (apply coord/angular-distance rest))
+  (apply bod/angular-distance rest))
 
 (defn distance-to-horizon
-  "Alias for `clj-predict.coordinates/distance-to-horizon`."
+  "Alias for `clj-predict.body/distance-to-horizon`."
   [& rest]
-  (apply coord/distance-to-horizon rest))
+  (apply bod/distance-to-horizon rest))
 
 (defn angular-diameter
-  "Alias for `clj-predict.coordinates/angular-diameter`."
+  "Alias for `clj-predict.body/angular-diameter`."
   [& rest]
-  (apply coord/angular-diameter rest))
+  (apply bod/angular-diameter rest))
 
 (defn surface-visible?
-  "Alias for `clj-predict.coordinates/surface-visible?`."
+  "Alias for `clj-predict.body/surface-visible?`."
   [& rest]
-  (apply coord/surface-visible? rest))
+  (apply bod/surface-visible? rest))
 
 (defn look-angle
-  "Alias for `clj-predict.coordinates/look-angle`."
+  "Alias for `clj-predict.body/look-angle`."
   [& rest]
-  (apply coord/look-angle rest))
+  (apply bod/look-angle rest))
 
 (defn aspect-angle
-  "Alias for `clj-predict.coordinates/aspect-angle`."
+  "Alias for `clj-predict.body/aspect-angle`."
   [& rest]
-  (apply coord/aspect-angle rest))
+  (apply bod/aspect-angle rest))
 
 ;;;; clj-predict.coverage ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -2,26 +2,46 @@
   "Helper functions to be used in other *clj-predict* namespaces.")
 
 ;;;; Reference Look-Up ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def wgs84 
-  "Parameters in the *1984 World Geodetic System (WGS84)* defining the
-   measurements of the Earth's reference ellipsoid. Available 
-   keys for the returned `wgs84` map are:
-
-   > `:semi-major-axis` - Earth's equatorial radius, in meters  
-   > `:semi-minor-axis` - Earth's polar radius, in meters  
-   > `:mean-radius` - Mean radius of the Earth, in meters  
-   > `:coeff-flat` - Coefficient of flattening for the Earth's surface  
-   > `:ecc-squared` - Squared eccentricity of the reference ellipsoid"
-  (let [a 6378137
-        f (/ 1 298.257223563)
+(defn celestial-body-factory
+  [semi-major-axis flattening]
+  (let [a semi-major-axis
+        f flattening
         b (* a (- 1 f))
         r (-> (+ b (* 2 a)) (/ 3))
         e (- (* 2 f) (* f f))]
-    {:semi-major-axis a
-     :semi-minor-axis b
-     :mean-radius r
-     :coeff-flat f
-     :ecc-squared e}))
+    {:semi-major-axis a :semi-minor-axis b :mean-radius r
+     :coeff-flat f :ecc-squared e}))
+
+(def celestial-bodies
+  (atom {:earth   (celestial-body-factory   6378100 0.0033528)
+         :moon    (celestial-body-factory   1738130   0.00125)
+         :sun     (celestial-body-factory 696342000  0.000009)
+         :mercury (celestial-body-factory   2439700         0)
+         :venus   (celestial-body-factory   6051800         0)
+         :mars    (celestial-body-factory   3396200   0.00589)
+         :jupiter (celestial-body-factory  71492000   0.06487)
+         :saturn  (celestial-body-factory  60268000   0.09796)
+         :uranus  (celestial-body-factory  25559000    0.0229)
+         :neptune (celestial-body-factory  24764000    0.0171)}))
+
+(defn celestial-bodies!
+  ([name]
+    (swap! celestial-bodies dissoc name))
+  ([name semi-major-axis flattening]
+    (swap! celestial-bodies merge {name (celestial-body-factory
+                                          semi-major-axis flattening)})))
+
+(def celestial-default (atom :earth))
+
+(defn celestial-default!
+  [name]
+  (reset! celestial-default name))
+
+(defn celestial-body
+  ([]
+    (celestial-body @celestial-default))
+  ([name]
+    (get @celestial-bodies name)))
 
 ;;;; Coordinate Reference Frames ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn deg->rad 
@@ -44,6 +64,7 @@
   (let [phi (deg->rad lat)
         lambda (deg->rad lon)
         h alt
+        wgs84 (celestial-body :earth)
         re (:semi-major-axis wgs84)
         rp (:semi-minor-axis wgs84)
         e-squared (:ecc-squared wgs84)
@@ -52,6 +73,12 @@
     {:x (* (+ n h) (Math/cos phi) (Math/cos lambda))
      :y (* (+ n h) (Math/cos phi) (Math/sin lambda))
      :z (* (+ (* n (- 1 e-squared)) h) sin-phi)}))
+
+(defn geodetic-rad->ecef
+  [{:keys [phi lam alt]}]
+  (let [lat (rad->deg phi)
+        lon (rad->deg lam)]
+    (geodetic->ecef {:lat lat :lon lon :alt alt})))
 
 (defn ecef->geodetic
   "Convert a map of Earth Centered Earth Fixed (ECEF) coordinates to a Geodetic
@@ -65,6 +92,7 @@
         p (Math/sqrt (+ (* x x) (* y y)))
         rp (Math/sqrt (+ (* x x) (* y y) (* z z)))
         l-sign (if (< z 0) -1 1)
+        wgs84 (celestial-body :earth)
         a (:semi-major-axis wgs84)
         b (:semi-minor-axis wgs84)
         e-squared (:ecc-squared wgs84)
@@ -89,43 +117,54 @@
                :alt (- (Math/sqrt (+ (* x x) (* y y) (* zd zd))) n)})
             (recur zi-next)))))))
 
-(def coordinate-map
+(defn ecef->geodetic-rad
+  [{:keys [x y z]}]
+  (let [geo (ecef->geodetic {:x x :y y :z z})]
+    {:phi (deg->rad (:lat geo)) :lam (deg->rad (:lon geo)) :alt (:alt geo)}))
+
+(def coordinate-reference
   (atom {; Earth-Centered, Earth-Fixed (used as conversion reference)
          :ecef    {:input identity
                    :output identity
                    :format #{:x :y :z}}
-         ; Geodetic Datum
+         ; Geodetic Datum (degrees)
          :geodetic {:input geodetic->ecef
                     :output ecef->geodetic
                     :format #{:lat :lon :alt}}
+         ; Geodetic Datum (radians)
+         :geodetic-rad {:input geodetic-rad->ecef
+                        :output ecef->geodetic-rad
+                        :format #{:phi :lam :alt}}
          ; Earth-Centered Inertial
          :eci     {:input nil
                    :output nil
                    :format #{:i :j :k}}}))
 
-(defn coordinate-map!
-  [coord-map]
-  (swap! coordinate-map merge coord-map))
+(defn coordinate-reference!
+  ([name]
+    (swap! coordinate-reference dissoc name))
+  ([name coord-map]
+    (swap! coordinate-reference merge {name coord-map})))
 
-(def coordinate-output (atom :geodetic))
+(def coordinate-default (atom :geodetic))
 
-(defn coordinate-output!
+(defn coordinate-default!
   [coord-frame]
-  (reset! coordinate-output coord-frame))
+  (reset! coordinate-default coord-frame))
 
 (defn coordinate-type
   [coords]
   (let [match? (fn [m] (every? (:format (val m)) (keys coords)))]
-    (key (or (first (filter match? @coordinate-map))
+    (key (or (first (filter match? @coordinate-reference))
              (first {:unknown nil})))))
 
 (defn coordinate-frame
   ([coords]
-    (coordinate-frame coords @coordinate-output))
+    (coordinate-frame coords @coordinate-default))
   ([coords output]
     (let [coord-type (coordinate-type coords)
-          input-coord-map (get @coordinate-map coord-type)
-          output-coord-map (get @coordinate-map output)]
+          input-coord-map (get @coordinate-reference coord-type)
+          output-coord-map (get @coordinate-reference output)]
       ; throw exception if either coordinate type is unknown
       (if (or (nil? input-coord-map) (nil? output-coord-map))
         (throw (Exception. "*** coordinate reference frame unknown ***"))
