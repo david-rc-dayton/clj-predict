@@ -1,37 +1,6 @@
 (ns clj-predict.coordinates
   "Coordinate operations and transforms.")
 
-(def wgs84 
-  "Parameters in the *1984 World Geodetic System (WGS84)* defining the
-   measurements of the Earth's reference ellipsoid. Available 
-   keys for the returned `wgs84` map are:
-
-   > `:semi-major-axis` - Earth's equatorial radius, in meters  
-   > `:semi-minor-axis` - Earth's polar radius, in meters  
-   > `:mean-radius` - Mean radius of the Earth, in meters  
-   > `:coeff-flat` - Coefficient of flattening for the Earth's surface  
-   > `:ecc-squared` - Squared eccentricity of the reference ellipsoid"
-  (let [a 6378137
-        f (/ 1 298.257223563)
-        b (* a (- 1 f))
-        r (-> (+ b (* 2 a)) (/ 3))
-        e (- (* 2 f) (* f f))]
-    {:semi-major-axis a
-     :semi-minor-axis b
-     :mean-radius r
-     :coeff-flat f
-     :ecc-squared e}))
-
-(defn deg->rad 
-  "Converts argument `deg` from degrees to radians."
-  [deg]
-  (* deg (/ Math/PI 180)))
-
-(defn rad->deg
-  "Converts argument `rad` from radians to degrees."
-  [rad]
-  (* rad (/ 180 Math/PI)))
-
 (defn geo-radius
   "Calculate Earth's geocentric radius for a map containing the key `:lat` in
    degrees.
@@ -129,7 +98,7 @@
   (let [adist-fn (get adist-methods method)]
     (adist-fn start-point end-point)))
 
-(defn horizon
+(defn distance-to-horizon
   "Calculate the angular distance to horizon from an observer above the Earth's
    surface. Takes one argument, a map of the observer's `:lat :alt` in degrees
    and meters.

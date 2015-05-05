@@ -17,10 +17,10 @@
   [& rest]
   (apply coord/angular-distance rest))
 
-(defn horizon
-  "Alias for `clj-predict.coordinates/horizon`."
+(defn distance-to-horizon
+  "Alias for `clj-predict.coordinates/distance-to-horizon`."
   [& rest]
-  (apply coord/horizon rest))
+  (apply coord/distance-to-horizon rest))
 
 (defn angular-diameter
   "Alias for `clj-predict.coordinates/angular-diameter`."
@@ -31,16 +31,6 @@
   "Alias for `clj-predict.coordinates/surface-visible?`."
   [& rest]
   (apply coord/surface-visible? rest))
-
-(defn geodetic->ecf
-  "Alias for `clj-predict.coordinates/geodetic->ecf`."
-  [& rest]
-  (apply coord/geodetic->ecf rest))
-
-(defn ecf->geodetic
-  "Alias for `clj-predict.coordinates/ecf->geodetic`."
-  [& rest]
-  (apply coord/ecf->geodetic rest))
 
 (defn look-angle
   "Alias for `clj-predict.coordinates/look-angle`."
