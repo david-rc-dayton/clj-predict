@@ -103,9 +103,15 @@
                    :output nil
                    :format #{:i :j :k}}}))
 
-(defn merge-coordinate-map!
+(defn coordinate-map!
   [coord-map]
   (swap! coordinate-map merge coord-map))
+
+(def coordinate-output (atom :geodetic))
+
+(defn coordinate-output!
+  [coord-frame]
+  (reset! coordinate-output coord-frame))
 
 (defn coordinate-type
   [coords]
@@ -114,16 +120,18 @@
              (first {:unknown nil})))))
 
 (defn coordinate-frame
-  [coords output]
-  (let [coord-type (coordinate-type coords)
-        input-coord-map (get @coordinate-map coord-type)
-        output-coord-map (get @coordinate-map output)]
-    ; throw exception if either coordinate type is unknown
-    (if (or (nil? input-coord-map) (nil? output-coord-map))
-      (throw (Exception. "*** coordinate reference frame unknown ***"))
-      ; do nothing if already the correct type
-      (if (= coord-type output)
-        coords
-        (let [input-fn (:input input-coord-map)
-              output-fn (:output output-coord-map)]
-          (-> (input-fn coords) output-fn))))))
+  ([coords]
+    (coordinate-frame coords @coordinate-output))
+  ([coords output]
+    (let [coord-type (coordinate-type coords)
+          input-coord-map (get @coordinate-map coord-type)
+          output-coord-map (get @coordinate-map output)]
+      ; throw exception if either coordinate type is unknown
+      (if (or (nil? input-coord-map) (nil? output-coord-map))
+        (throw (Exception. "*** coordinate reference frame unknown ***"))
+        ; do nothing if already the correct type
+        (if (= coord-type output)
+          coords
+          (let [input-fn (:input input-coord-map)
+                output-fn (:output output-coord-map)]
+            (-> (input-fn coords) output-fn)))))))
