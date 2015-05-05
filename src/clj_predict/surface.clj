@@ -1,22 +1,19 @@
-(ns clj-predict.body
-  "Operations applicable to the Earth and other celestial bodies."
-  (:require [clj-predict.help :as help]))
+(ns clj-predict.surface
+  "Operations applicable to the Earth and other celestial bodies.")
 
 (defn geo-radius
-  "Calculate Earth's geocentric radius for a map containing the key `:lat` in
-   degrees.
-
-   Returns the distance between the center of the Earth and the surface of the
-   `wgs84` reference ellipsoid for the given latitude, in meters."
-  [{:keys [lat]}]
-  (let [phi (deg->rad lat)
-        a (:semi-major-axis wgs84)
-        b (:semi-minor-axis wgs84)]
-    (-> (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
-              (Math/pow (* b b (Math/sin phi)) 2))
-           (+ (Math/pow (* a (Math/cos phi)) 2)
-              (Math/pow (* b (Math/sin phi)) 2)))
-      (Math/sqrt))))
+  ([coord]
+    (geo-radius coord (help/celestial-body)))
+  ([coord body]
+    (let [phi (:phi (help/coordinate-frame coord :geodetic-rad))
+          body-map (celestial-body body)
+          a (:semi-major-axis body-map)
+          b (:semi-minor-axis body-map)]
+      (-> (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
+                (Math/pow (* b b (Math/sin phi)) 2))
+             (+ (Math/pow (* a (Math/cos phi)) 2)
+                (Math/pow (* b (Math/sin phi)) 2)))
+        (Math/sqrt)))))
 
 (defn adist-haversine
   "Calculate angular distance, in degrees, between two points on the Earth's
