@@ -129,11 +129,11 @@
 
 (defn azimuth
   [earth-station satellite]
-  (let [es (coord/coordinate-frame earth-station :geodetic-rad)
-        sat (coord/coordinate-frame satellite :geodetic-rad)
+  (let [es (coord/coordinate-frame earth-station :llh-rad)
+        sat (coord/coordinate-frame satellite :llh-rad)
         Le (:phi es)
         Ls (:phi sat)
-        ls-le (- (:lam sat) (:lam es))
+        ls-le (- (:lambda sat) (:lambda es))
         y (* (Math/sin ls-le) (Math/cos Ls))
         x (- (* (Math/cos Le) (Math/sin Ls))
              (* (Math/sin Le) (Math/cos Ls) (Math/cos ls-le)))]
@@ -141,11 +141,11 @@
 
 (defn elevation
   [earth-station satellite]
-  (let [es (coord/coordinate-frame earth-station :geodetic)
-        sat (coord/coordinate-frame satellite :geodetic)
-        A (coord/deg->rad (:lat es))
-        B (coord/deg->rad (:lat satellite))
-        Lt (- (:lon es) (:lon sat))
+  (let [es (coord/coordinate-frame earth-station :llh)
+        sat (coord/coordinate-frame satellite :llh)
+        A (coord/deg->rad (:latitude es))
+        B (coord/deg->rad (:latitude sat))
+        Lt (- (:longitude es) (:longitude sat))
         L (coord/deg->rad (cond 
                             (> Lt 180)  (- Lt 360)
                             (< Lt -180) (+ Lt 360)
@@ -153,8 +153,8 @@
         D (coord/rad->deg
             (Math/acos (+ (* (Math/sin A) (Math/sin B))
                           (* (Math/cos A) (Math/cos B) (Math/cos L)))))
-        K (/ (+ (geo-radius sat) (:alt sat))
-             (+ (geo-radius es) (:alt es)))
+        K (/ (+ (geo-radius sat) (:height sat))
+             (+ (geo-radius es) (:height es)))
         D-prime (coord/deg->rad (- 90 D))]
     (coord/rad->deg (Math/atan (- (Math/tan D-prime)
                                   (/ 1 (* K (Math/cos D-prime))))))))
@@ -181,16 +181,16 @@
   (let [a (coord/coordinate-frame origin :ecef)
         b (coord/coordinate-frame point-one :ecef)
         c (coord/coordinate-frame point-two :ecef)
-        mag-fn (fn [{:keys [xf yf zf]}]
-                 (Math/sqrt (+ (* xf xf) (* yf yf) (* zf zf))))
-        a-b {:xf (- (:xf a) (:xf b))
-             :yf (- (:yf a) (:yf b))
-             :zf (- (:zf a) (:zf b))}
-        a-c {:xf (- (:xf a) (:xf c))
-             :yf (- (:yf a) (:yf c))
-             :zf (- (:zf a) (:zf c))}
-        n (+ (* (:xf a-b) (:xf a-c))
-             (* (:yf a-b) (:yf a-c))
-             (* (:zf a-b) (:zf a-c)))
+        mag-fn (fn [{:keys [x y z]}]
+                 (Math/sqrt (+ (* x x) (* y y) (* z z))))
+        a-b {:x (- (:x a) (:x b))
+             :y (- (:y a) (:y b))
+             :z (- (:z a) (:z b))}
+        a-c {:x (- (:x a) (:x c))
+             :y (- (:y a) (:y c))
+             :z (- (:z a) (:z c))}
+        n (+ (* (:x a-b) (:x a-c))
+             (* (:y a-b) (:y a-c))
+             (* (:z a-b) (:z a-c)))
         d (reduce * (map mag-fn [a-b a-c]))]
     (coord/rad->deg (Math/acos (/ n d)))))
