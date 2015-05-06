@@ -1,14 +1,15 @@
 (ns clj-predict.surface
-  "Operations applicable to the Earth and other celestial bodies.")
+  "Operations applicable to the Earth and other celestial bodies."
+  (:require [clj-predict.coordinates :as coord]
+            [clj-predict.properties :as props]))
 
 (defn geo-radius
   ([coord]
-    (geo-radius coord (help/celestial-body)))
+    (geo-radius coord (props/celestial-body)))
   ([coord body]
-    (let [phi (:phi (help/coordinate-frame coord :geodetic-rad))
-          body-map (celestial-body body)
-          a (:semi-major-axis body-map)
-          b (:semi-minor-axis body-map)]
+    (let [phi (:phi (coord/coordinate-frame coord :llh-rad))
+          a (:semi-major-axis (props/celestial-body body))
+          b (:semi-minor-axis (props/celestial-body body))]
       (-> (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
                 (Math/pow (* b b (Math/sin phi)) 2))
              (+ (Math/pow (* a (Math/cos phi)) 2)
@@ -16,60 +17,37 @@
         (Math/sqrt)))))
 
 (defn adist-haversine
-  "Calculate angular distance, in degrees, between two points on the Earth's
-   surface using the Haversine Formula (the slowest, most accurate method) for
-   angular distance computation. Takes two maps as arguments, with values in
-   degrees:
-
-   > `start-point` - Map of the `:lat :lon` for the start point  
-   > `end-point` - Map of the `:lat :lon` for the end point
-
-   Returns the angular distance between the two points in degrees."
-  [{:keys [lat lon] :as start-point} {:keys [lat lon] :as end-point}]
-  (let [p1 (deg->rad (:lat start-point))
-        p2 (deg->rad (:lat end-point))
-        delta-p (deg->rad (- (:lat end-point)
-                             (:lat start-point)))
-        delta-l (deg->rad (- (:lon end-point)
-                             (:lon start-point)))
+  [start-point end-point]
+  (let [s-p (coord/coordinate-frame start-point :llh-rad)
+        e-p (coord/coordinate-frame end-point :llh-rad)
+        p1 (:phi s-p)
+        p2 (:phi e-p)
+        delta-p (- (:phi e-p) (:phi s-p))
+        delta-l (- (:lambda e-p) (:lambda s-p))
         a (+ (Math/pow (Math/sin (/ delta-p 2)) 2)
              (* (Math/cos p1) (Math/cos p2)
                 (Math/pow (Math/sin (/ delta-l 2)) 2)))]
-    (rad->deg (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a)))))))
+    (coord/rad->deg (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a)))))))
 
 (defn adist-cosine
-  "Calculate angular distance, in degrees, between two points on the Earth's
-   surface using the Spherical Law of Cosines (faster, but less accurate than 
-   the Haversine Formula) for angular distance computation. Takes two maps as
-   arguments, with values in degrees:
-
-   > `start-point` - Map of the `:lat :lon` for the start point  
-   > `end-point` - Map of the `:lat :lon` for the end point
-
-   Returns the angular distance between the two points in degrees."
-  [{:keys [lat lon] :as start-point} {:keys [lat lon] :as end-point}]
-  (let [p1 (deg->rad (:lat start-point))
-        p2 (deg->rad (:lat end-point))
-        delta-l (deg->rad (- (:lon end-point) 
-                             (:lon start-point)))]
-    (rad->deg (Math/acos (+ (* (Math/sin p1) (Math/sin p2))
-                            (* (Math/cos p1) (Math/cos p2) 
-                               (Math/cos delta-l)))))))
+  [start-point end-point]
+  (let [s-p (coord/coordinate-frame start-point :llh-rad)
+        e-p (coord/coordinate-frame end-point :llh-rad)
+        p1 (:phi s-p)
+        p2 (:phi e-p)
+        delta-l (- (:lambda e-p) (:lambda s-p))]
+    (coord/rad->deg
+      (Math/acos (+ (* (Math/sin p1) (Math/sin p2))
+                    (* (Math/cos p1) (Math/cos p2) (Math/cos delta-l)))))))
 
 (defn adist-equirect
-  "Calculate angular distance, in degrees, between two points on the Earth's
-   surface using the Equirectangular Approximation (fastest, but least accurate
-   method of calculation) for angular distance computation. Takes the arguments:
-
-   > `start-point` - Map of the `:lat :lon` for the start point  
-   > `end-point` - Map of the `:lat :lon` for the end point
-
-   Returns the angular distance between the two points in degrees."
-  [{:keys [lat lon] :as start-point} {:keys [lat lon] :as end-point}]
-  (let [delta-lambda (- (:lon end-point) (:lon start-point))
-        phi-m (/ (+ (:lat end-point) (:lat start-point)) 2)
-        x (* delta-lambda (Math/cos (deg->rad phi-m)))
-        y (- (:lat end-point) (:lat start-point))]
+  [start-point end-point]
+  (let [s-p (coord/coordinate-frame start-point :llh)
+        e-p (coord/coordinate-frame end-point :llh)
+        delta-lon (- (:longitude e-p) (:longitude s-p))
+        lat-m (/ (+ (:latitude e-p) (:latitude s-p)) 2)
+        x (* delta-lon (Math/cos (coord/deg->rad lat-m)))
+        y (- (:latitude e-p) (:latitude s-p))]
     (Math/sqrt (+ (* x x) (* y y)))))
 
 (def adist-methods
@@ -84,43 +62,26 @@
    :equirect  adist-equirect})
 
 (defn angular-distance
-  "Calculate angular distance, in degrees, between two points on the Earth's
-   surface. Takes a keyword, and two maps, with values in degrees, as arguments:
-
-   > `method` - calculation method (see `adist-methods`)  
-   > `start-point` - Map containing the `:lat :lon` for the start point  
-   > `end-point` - Map containing the `:lat :lon` for the end point
-
-   Returns the angular distance between the two points in degrees."
-  [method {:keys [lat lon] :as start-point} {:keys [lat lon] :as end-point}]
+  [method start-point end-point]
   (let [adist-fn (get adist-methods method)]
     (adist-fn start-point end-point)))
 
 (defn distance-to-horizon
-  "Calculate the angular distance to horizon from an observer above the Earth's
-   surface. Takes one argument, a map of the observer's `:lat :alt` in degrees
-   and meters.
-
-   Returns the angular distance from the observer's nadir to the horizon, in
-   degrees."
-  [{:keys [lat alt] :as observer}]
-  (let [r (geo-radius observer)]
-    (rad->deg (Math/acos (/ r (+ r alt))))))
+  ([observer]
+    (distance-to-horizon observer (props/celestial-body)))
+  ([observer body]
+    (let [o-p (coord/coordinate-frame observer :llh)
+          _ (println o-p)
+          r (geo-radius observer body)]
+      (coord/rad->deg (Math/acos (/ r (+ r (:height o-p))))))))
 
 (defn surface-visible?
-  "Calculate the visibility of a point on the Earth's surface from a satellite
-   observer. Takes the arguments:
-
-   > `method` - keyword for the method of calculation (see `adist-methods`)  
-   > `observer` - Map with keys `:lat :lon :alt` for the observer's location  
-   > `point` - Map with keys `:lat :lon` for the point's location
-
-   Returns `true` if the point on the Earth's surface is visible from the
-   observer."
-  [method {:keys [lat lon alt] :as observer} {:keys [lat lon] :as point}]
-  (let [adist-fn (get adist-methods method)
-        limit (distance-to-horizon observer)]
-    (<= (adist-fn observer point) limit)))
+  ([method observer ground]
+    (surface-visible? method observer ground (props/celestial-body)))
+  ([method observer ground body]
+    (let [adist-fn (get adist-methods method)
+          limit (distance-to-horizon observer body)]
+      (<= (adist-fn observer ground) limit))))
 
 (defn adiam-sphere
   "Calculate the angular diameter of a sphere, given the `distance` from the
@@ -130,7 +91,7 @@
    Returns the angular diameter of the sphere, relative to the observer, in
    degrees."
   [distance diameter]
-  (rad->deg (* 2 (Math/asin (/ diameter (* 2 distance))))))
+  (coord/rad->deg (* 2 (Math/asin (/ diameter (* 2 distance))))))
 
 (defn adiam-disc
   "Calculate the angular diameter of a disc, given the `distance` from the
@@ -140,7 +101,7 @@
    Returns the angular diameter of the disc, relative to the observer, in
    degrees."
   [distance diameter]
-  (rad->deg (* 2 (Math/atan (/ diameter (* 2 distance))))))
+  (coord/rad->deg (* 2 (Math/atan (/ diameter (* 2 distance))))))
 
 (def adiam-methods
   "Map associating keywords with a method of angular diameter calculation.
@@ -168,77 +129,48 @@
     (adiam-fn distance diameter)))
 
 (defn azimuth
-  "Calculate the azimuth between an earth-station and a satellite. Takes two
-   maps as arguments, in degrees:
-
-   > `earth-station` - Map of the `:lat :lon` for an earth-station  
-   > `satellite` - Map of the `:lat :lon` for a satellite
-
-   Returns the antenna azimuth in degrees from true north."
-  [{:keys [lat lon] :as earth-station} {:keys [lat lon] :as satellite}]
-  (let [Le (deg->rad (:lat earth-station))
-        Ls (deg->rad (:lat satellite))
-        ls-le (deg->rad (- (:lon satellite)
-                           (:lon earth-station)))
+  [earth-station satellite]
+  (let [es (coord/coordinate-frame earth-station :geodetic-rad)
+        sat (coord/coordinate-frame satellite :geodetic-rad)
+        Le (:phi es)
+        Ls (:phi sat)
+        ls-le (- (:lam sat) (:lam es))
         y (* (Math/sin ls-le) (Math/cos Ls))
         x (- (* (Math/cos Le) (Math/sin Ls))
              (* (Math/sin Le) (Math/cos Ls) (Math/cos ls-le)))]
-    (mod (+ 360 (rad->deg (Math/atan2 y x))) 360)))
+    (mod (+ 360 (coord/rad->deg (Math/atan2 y x))) 360)))
 
 (defn elevation
-  "Calculate the elevation between an earth-station and a satellite. Takes two
-   maps as arguments, in degrees and meters:
-
-   > `earth-station` - Map of the `:lat :lon :alt` for an earth-station  
-   > `satellite` - Map of the `:lat :lon :alt` for a satellite
-
-   Returns the antenna elevation in degrees above-the-horizon."
-  [{:keys [lat lon alt] :as earth-station}  {:keys [lat lon alt] :as satellite}]
-  (let [A (deg->rad (:lat earth-station))
-        B (deg->rad (:lat satellite))
-        Lt (- (:lon earth-station) (:lon satellite))
-        L (deg->rad (cond 
-                      (> Lt 180)  (- Lt 360)
-                      (< Lt -180) (+ Lt 360)
-                      :else Lt))
-        D (rad->deg (Math/acos (+ (* (Math/sin A) (Math/sin B))
-                                  (* (Math/cos A) (Math/cos B) (Math/cos L)))))
-        K (/ (+ (geo-radius satellite) (:alt satellite))
-             (+ (geo-radius earth-station) (:alt earth-station)))
-        D-prime (deg->rad (- 90 D))]
-    (rad->deg (Math/atan (- (Math/tan D-prime)
-                            (/ 1 (* K (Math/cos D-prime))))))))
+  [earth-station satellite]
+  (let [es (coord/coordinate-frame earth-station :geodetic)
+        sat (coord/coordinate-frame satellite :geodetic)
+        A (coord/deg->rad (:lat es))
+        B (coord/deg->rad (:lat satellite))
+        Lt (- (:lon es) (:lon sat))
+        L (coord/deg->rad (cond 
+                            (> Lt 180)  (- Lt 360)
+                            (< Lt -180) (+ Lt 360)
+                            :else Lt))
+        D (coord/rad->deg
+            (Math/acos (+ (* (Math/sin A) (Math/sin B))
+                          (* (Math/cos A) (Math/cos B) (Math/cos L)))))
+        K (/ (+ (geo-radius sat) (:alt sat))
+             (+ (geo-radius es) (:alt es)))
+        D-prime (coord/deg->rad (- 90 D))]
+    (coord/rad->deg (Math/atan (- (Math/tan D-prime)
+                                  (/ 1 (* K (Math/cos D-prime))))))))
 
 (defn distance
-  "Calculate the distance between an earth-station and a satellite. Takes two
-   maps as arguments, in degrees and meters:
-
-   > `earth-station` - Map of the `:lat :lon :alt` for an earth-station  
-   > `satellite` - Map of the `:lat :lon :alt` for a satellite
-
-   Returns the distance between the earth-station and satellite in meters."
-  [{:keys [lat lon alt] :as earth-station} {:keys [lat lon alt] :as satellite}]
-  (let [es-ecf (geodetic->ecf earth-station)
-        sat-ecf (geodetic->ecf satellite)
-        x-delta (Math/pow (- (:xf es-ecf) (:xf sat-ecf)) 2)
-        y-delta (Math/pow (- (:yf es-ecf) (:yf sat-ecf)) 2)
-        z-delta (Math/pow (- (:zf es-ecf) (:zf sat-ecf)) 2)]
+  [earth-station satellite]
+  (let [es (coord/coordinate-frame earth-station :ecef)
+        sat (coord/coordinate-frame satellite :ecef)
+        x-delta (Math/pow (- (:x es) (:x sat)) 2)
+        y-delta (Math/pow (- (:y es) (:y sat)) 2)
+        z-delta (Math/pow (- (:z es) (:z sat)) 2)]
     (Math/sqrt (+ x-delta y-delta z-delta))))
 
 (defn look-angle
-  "Calculate the look-angle between earth station and satellite locations. Takes
-   two maps as arguments, with values in degrees and meters:
-
-   > `earth-station` - Map of the `:lat :lon :alt` for an earth-station  
-   > `satellite` - Map of the `:lat :lon :alt` for a satellite
-
-   Returns the antenna look-angle as a map containing the keys:
-
-   > `:az` - Antenna azimuth in degrees; zero is true north  
-   > `:el` - Antenna elevation in degrees above-the-horizon  
-   > `:rng` - Distance between the earth-station and satellite, in meters  
-   > `:vis?` - `true` if the satellite is in view of the antenna"
-  [{:keys [lat lon alt] :as earth-station} {:keys [lat lon alt] :as satellite}]
+  [earth-station satellite]
   (let [az (azimuth earth-station satellite)
         el (elevation earth-station satellite)
         rng (distance earth-station satellite)
@@ -246,19 +178,10 @@
     {:az az :el el :rng rng :vis? vis?}))
 
 (defn aspect-angle
-  "Calculate the angle between an origin, and two points. Takes three arguments:
-
-   > `origin` - Map containing the `:lat lon alt` of the origin point  
-   > `point-one` - Map containing the `:lat lon alt` of the first point  
-   > `point-two` - Map containing the `:lat lon alt` of the second point
-
-   Outputs the angle between the points in degrees."
-  [{:keys [lat lon alt] :as origin}
-   {:keys [lat lon alt] :as point-one}
-   {:keys [lat lon alt] :as point-two}]
-  (let [a (geodetic->ecf origin)
-        b (geodetic->ecf point-one)
-        c (geodetic->ecf point-two)
+  [origin point-one point-two]
+  (let [a (coord/coordinate-frame origin :ecef)
+        b (coord/coordinate-frame point-one :ecef)
+        c (coord/coordinate-frame point-two :ecef)
         mag-fn (fn [{:keys [xf yf zf]}]
                  (Math/sqrt (+ (* xf xf) (* yf yf) (* zf zf))))
         a-b {:xf (- (:xf a) (:xf b))
@@ -271,4 +194,4 @@
              (* (:yf a-b) (:yf a-c))
              (* (:zf a-b) (:zf a-c)))
         d (reduce * (map mag-fn [a-b a-c]))]
-    (rad->deg (Math/acos (/ n d)))))
+    (coord/rad->deg (Math/acos (/ n d)))))

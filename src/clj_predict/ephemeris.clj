@@ -1,4 +1,4 @@
-(ns clj-predict.propagation
+(ns clj-predict.ephemeris
   "Clojure wrapper to the *predict4java*
    [SGP4](http://en.wikipedia.org/wiki/Simplified_perturbations_models)
    satellite ephemeris propagation library."

@@ -1,7 +1,11 @@
 (ns clj-predict.properties
   "Physical properties and units used in calculation.")
 
-(def celestial-default :earth)
+(def celestial-default (atom :earth))
+
+(defn celestial-default!
+  [k]
+  (reset! celestial-default k))
 
 (defn celestial-body-factory
   [semi-major-axis flattening]
@@ -14,7 +18,7 @@
      :coeff-flat f :ecc-squared e}))
 
 (def celestial-bodies
-  (atom {:earth   (celestial-body-factory   6378100 0.0033528)
+  (atom {:earth   (celestial-body-factory   6378137 0.0033528)
          :moon    (celestial-body-factory   1738130   0.00125)
          :sun     (celestial-body-factory 696342000  0.000009)
          :mercury (celestial-body-factory   2439700         0)
@@ -34,6 +38,6 @@
 
 (defn celestial-body
   ([]
-    (celestial-body celestial-default))
+    @celestial-default)
   ([name]
     (get @celestial-bodies name)))

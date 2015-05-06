@@ -2,7 +2,15 @@
   "Functions for coordinate system transforms."
   (:require [clj-predict.properties :as props]))
 
-(def coordinate-default :geodetic)
+;;;; Default Values ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def coordinate-default (atom :llh))
+
+(defn coordinate-default!
+  [k]
+  (reset! coordinate-default k))
+
+;;;; Coordinate Transforms ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn deg->rad 
   "Converts argument `deg` from degrees to radians."
@@ -14,80 +22,92 @@
   [rad]
   (* rad (/ 180 Math/PI)))
 
-(defn geodetic->ecef
-  [{:keys [lat lon alt]}]
-  (let [phi (deg->rad lat)
-        lambda (deg->rad lon)
-        h alt
-        wgs84 (props/celestial-body :earth)
+(defn llh-rad->ecef
+  [{:keys [phi lambda height]}]
+  (let [wgs84 (props/celestial-body :earth)
         re (:semi-major-axis wgs84)
-        rp (:semi-minor-axis wgs84)
         e-squared (:ecc-squared wgs84)
         sin-phi (Math/sin phi)
+        cos-phi (Math/cos phi)
+        sin-lam (Math/sin lambda)
+        cos-lam (Math/cos lambda)
         n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-phi 2)))))]
-    {:x (* (+ n h) (Math/cos phi) (Math/cos lambda))
-     :y (* (+ n h) (Math/cos phi) (Math/sin lambda))
-     :z (* (+ (* n (- 1 e-squared)) h) sin-phi)}))
+    {:x (* (+ n height) cos-phi cos-lam)
+     :y (* (+ n height) cos-phi sin-lam)
+     :z (* (+ (* n (- 1 e-squared)) height) sin-phi)}))
 
-(defn geodetic-rad->ecef
-  [{:keys [phi lam alt]}]
-  (let [lat (rad->deg phi)
-        lon (rad->deg lam)]
-    (geodetic->ecef {:lat lat :lon lon :alt alt})))
+(defn llh->ecef
+  [{:keys [latitude longitude height]}]
+  (let [phi (deg->rad latitude)
+        lambda (deg->rad longitude)]
+    (llh-rad->ecef {:phi phi :lambda lambda :height height})))
 
-(defn ecef->geodetic
+(defn ecef->llh-rad
   [{:keys [x y z]}]
-  (let [lambda (mod (Math/atan2 y x) (deg->rad 360))
-        p (Math/sqrt (+ (* x x) (* y y)))
-        rp (Math/sqrt (+ (* x x) (* y y) (* z z)))
-        l-sign (if (< z 0) -1 1)
+  (let [epsilon 1e-10
         wgs84 (props/celestial-body :earth)
         a (:semi-major-axis wgs84)
         b (:semi-minor-axis wgs84)
-        e-squared (:ecc-squared wgs84)
-        epsilon 1e-10]
-    ; correct undefined result at poles
+        e-sq (:ecc-squared wgs84)
+        lam (Math/atan2 y x)
+        r (-> (+ (* x x) (* y y) (* z z)) (Math/sqrt))
+        p (-> (+ (* x x) (* y y)) (Math/sqrt))
+        phi-c (Math/atan2 p z)
+        rn-fn (fn [pn]
+                (/ a (Math/sqrt (- 1 (* e-sq (Math/sin pn) (Math/sin pn))))))
+        hn-fn (fn [pn rn]
+                (-> (/ p (Math/cos pn)) (- rn)))
+        pn-fn (fn [rn hn]
+                ; catch divide by zero
+                (if (zero? (+ rn hn))
+                  (Math/atan (/ z p))
+                  (Math/atan (* (/ z p)
+                                (/ 1 (- 1 (* e-sq (/ rn (+ rn hn)))))))))]
+    ; handle special case at poles
     (if (< p epsilon)
-      {:lat (* l-sign 90) :lon (rad->deg lambda) :alt (- rp b)}
-      (loop [zi (* (- e-squared) z)]
-        (let [zd (- z zi)
-              n-plus-h (Math/sqrt (+ (* x x) (* y y) (* z z)))
-              sin-phi (/ zd n-plus-h)
-              n (/ a (Math/sqrt (- 1 (* e-squared sin-phi sin-phi))))
-              zi-next (* (- n) e-squared sin-phi)
-              delta-zi (Math/abs (- zi zi-next))]
-          (if (< delta-zi epsilon)
-            (let [nlam (rad->deg lambda)]
-              {:lat (rad->deg (Math/asin (/ zd n-plus-h)))
-               :lon (cond
-                      (> nlam 180)  (- nlam 360)
-                      (< nlam -180) (+ nlam 360)
-                      :else nlam)
-               :alt (- (Math/sqrt (+ (* x x) (* y y) (* zd zd))) n)})
-            (recur zi-next)))))))
+      (let [pole-phi (if (neg? z) (deg->rad -90.0) (deg->rad 90.0))
+            pole-lambda lam
+            pole-height (- r b)]
+        {:phi pole-phi :lambda pole-lambda :height pole-height})
+      ; otherwise, iterate toward a solution
+      (loop [p-now phi-c]
+        (let [r-next (rn-fn p-now)
+              h-next (hn-fn p-now r-next)
+              p-next (pn-fn r-next h-next)]
+          (if (> (Math/abs (- p-now p-next)) epsilon)
+            (recur p-next)
+            (let [l (+ z (* e-sq (rn-fn p-next) (Math/sin p-next)))
+                  phi p-next
+                  h (hn-fn phi (rn-fn phi))]
+              {:phi phi :lambda lam :height h})))))))
 
-(defn ecef->geodetic-rad
+(defn ecef->llh
   [{:keys [x y z]}]
-  (let [geo (ecef->geodetic {:x x :y y :z z})]
-    {:phi (deg->rad (:lat geo)) :lam (deg->rad (:lon geo)) :alt (:alt geo)}))
+  (let [geo-rad (ecef->llh-rad {:x x :y y :z z})
+        latitude (rad->deg (:phi geo-rad))
+        longitude (rad->deg (:lambda geo-rad))
+        height (:height geo-rad)]
+    {:latitude latitude :longitude longitude :height height}))
+
+;;;; Helper Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def coordinate-references
   (atom {; Earth-Centered, Earth-Fixed (used as conversion reference)
-         :ecef         {:input identity
-                        :output identity
-                        :format #{:x :y :z}}
-         ; Geodetic Datum (degrees)
-         :geodetic     {:input geodetic->ecef
-                        :output ecef->geodetic
-                        :format #{:lat :lon :alt}}
-         ; Geodetic Datum (radians)
-         :geodetic-rad {:input geodetic-rad->ecef
-                        :output ecef->geodetic-rad
-                        :format #{:phi :lam :alt}}
+         :ecef    {:input identity
+                   :output identity
+                   :format #{:x :y :z}}
+         ; Latitude Longitude Height (degrees)
+         :llh     {:input llh->ecef
+                   :output ecef->llh
+                   :format #{:latitude :longitude :height}}
+         ; Latitude Longitude Height (radians)
+         :llh-rad {:input llh-rad->ecef
+                   :output ecef->llh-rad
+                   :format #{:phi :lambda :height}}
          ; Earth-Centered Inertial
-         :eci          {:input nil
-                        :output nil
-                        :format #{:i :j :k}}}))
+         :eci     {:input nil
+                   :output nil
+                   :format #{:i :j :k}}}))
 
 (defn coordinate-referencess!
   ([name]
@@ -103,18 +123,22 @@
 
 (defn coordinate-frame
   ([coords]
-    (coordinate-frame coords coordinate-default))
+    (coordinate-frame coords @coordinate-default))
   ([coords output]
     (let [in-coord-type (coordinate-type coords)
           input-coord-map (get @coordinate-references in-coord-type)
           output-coord-map (get @coordinate-references output)]
       ; throw exception if either coordinate type is unknown
-      (if (or (nil? input-coord-map) (nil? output-coord-map))
-        (throw (Exception. "*** coordinate reference frame unknown ***"))
-        ; do nothing if already the correct type
-        (if (= in-coord-type output)
-          coords
-          ; otherwise, complete the conversion
-          (let [input-fn (:input input-coord-map)
-                output-fn (:output output-coord-map)]
-            (-> (input-fn coords) (output-fn))))))))
+      (when (nil? input-coord-map)
+        (throw (Exception. (str "***coordinate reference frame unknown*** "
+                                (keys coords)))))
+      (when (nil? output-coord-map)
+        (throw (Exception. (str "***coordinate reference frame unknown*** "
+                                output))))
+      ; do nothing if already the correct type
+      (if (= in-coord-type output)
+        coords
+        ; otherwise, complete the conversion
+        (let [input-fn (:input input-coord-map)
+              output-fn (:output output-coord-map)]
+          (-> (input-fn coords) (output-fn)))))))
