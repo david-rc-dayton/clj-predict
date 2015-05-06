@@ -5,12 +5,12 @@
 
 (defn adist-haversine
   [start-point end-point]
-  (let [s-p (coord/coordinate-frame start-point :llh-rad)
-        e-p (coord/coordinate-frame end-point :llh-rad)
+  (let [s-p (coord/coordinate-frame start-point :geodetic-rad)
+        e-p (coord/coordinate-frame end-point :geodetic-rad)
         p1 (:phi s-p)
         p2 (:phi e-p)
         delta-p (- (:phi e-p) (:phi s-p))
-        delta-l (- (:lambda e-p) (:lambda s-p))
+        delta-l (- (:lam e-p) (:lam s-p))
         a (+ (Math/pow (Math/sin (/ delta-p 2)) 2)
              (* (Math/cos p1) (Math/cos p2)
                 (Math/pow (Math/sin (/ delta-l 2)) 2)))]
@@ -18,23 +18,23 @@
 
 (defn adist-cosine
   [start-point end-point]
-  (let [s-p (coord/coordinate-frame start-point :llh-rad)
-        e-p (coord/coordinate-frame end-point :llh-rad)
+  (let [s-p (coord/coordinate-frame start-point :geodetic-rad)
+        e-p (coord/coordinate-frame end-point :geodetic-rad)
         p1 (:phi s-p)
         p2 (:phi e-p)
-        delta-l (- (:lambda e-p) (:lambda s-p))]
+        delta-l (- (:lam e-p) (:lam s-p))]
     (coord/rad->deg
       (Math/acos (+ (* (Math/sin p1) (Math/sin p2))
                     (* (Math/cos p1) (Math/cos p2) (Math/cos delta-l)))))))
 
 (defn adist-equirect
   [start-point end-point]
-  (let [s-p (coord/coordinate-frame start-point :llh)
-        e-p (coord/coordinate-frame end-point :llh)
-        delta-lon (- (:longitude e-p) (:longitude s-p))
-        lat-m (/ (+ (:latitude e-p) (:latitude s-p)) 2)
+  (let [s-p (coord/coordinate-frame start-point :geodetic)
+        e-p (coord/coordinate-frame end-point :geodetic)
+        delta-lon (- (:lon e-p) (:lon s-p))
+        lat-m (/ (+ (:lat e-p) (:lat s-p)) 2)
         x (* delta-lon (Math/cos (coord/deg->rad lat-m)))
-        y (- (:latitude e-p) (:latitude s-p))]
+        y (- (:lat e-p) (:lat s-p))]
     (Math/sqrt (+ (* x x) (* y y)))))
 
 (def adist-methods
@@ -57,9 +57,9 @@
   ([observer]
     (distance-to-horizon observer (props/celestial-body)))
   ([observer body]
-    (let [o-p (coord/coordinate-frame observer :llh)
+    (let [o-p (coord/coordinate-frame observer :geodetic-rad)
           r (coord/geo-radius observer body)]
-      (coord/rad->deg (Math/acos (/ r (+ r (:height o-p))))))))
+      (coord/rad->deg (Math/acos (/ r (+ r (:h o-p))))))))
 
 (defn surface-visible?
   ([method observer ground]
@@ -116,11 +116,11 @@
 
 (defn azimuth
   [earth-station satellite]
-  (let [es (coord/coordinate-frame earth-station :llh-rad)
-        sat (coord/coordinate-frame satellite :llh-rad)
+  (let [es (coord/coordinate-frame earth-station :geodetic-rad)
+        sat (coord/coordinate-frame satellite :geodetic-rad)
         Le (:phi es)
         Ls (:phi sat)
-        ls-le (- (:lambda sat) (:lambda es))
+        ls-le (- (:lam sat) (:lam es))
         y (* (Math/sin ls-le) (Math/cos Ls))
         x (- (* (Math/cos Le) (Math/sin Ls))
              (* (Math/sin Le) (Math/cos Ls) (Math/cos ls-le)))]
@@ -128,11 +128,11 @@
 
 (defn elevation
   [earth-station satellite]
-  (let [es (coord/coordinate-frame earth-station :llh)
-        sat (coord/coordinate-frame satellite :llh)
-        A (coord/deg->rad (:latitude es))
-        B (coord/deg->rad (:latitude sat))
-        Lt (- (:longitude es) (:longitude sat))
+  (let [es (coord/coordinate-frame earth-station :geodetic)
+        sat (coord/coordinate-frame satellite :geodetic)
+        A (coord/deg->rad (:lat es))
+        B (coord/deg->rad (:lat sat))
+        Lt (- (:lon es) (:lon sat))
         L (coord/deg->rad (cond 
                             (> Lt 180)  (- Lt 360)
                             (< Lt -180) (+ Lt 360)
@@ -140,8 +140,8 @@
         D (coord/rad->deg
             (Math/acos (+ (* (Math/sin A) (Math/sin B))
                           (* (Math/cos A) (Math/cos B) (Math/cos L)))))
-        K (/ (+ (coord/geo-radius sat) (:height sat))
-             (+ (coord/geo-radius es) (:height es)))
+        K (/ (+ (coord/geo-radius sat) (:alt sat))
+             (+ (coord/geo-radius es) (:alt es)))
         D-prime (coord/deg->rad (- 90 D))]
     (coord/rad->deg (Math/atan (- (Math/tan D-prime)
                                   (/ 1 (* K (Math/cos D-prime))))))))
