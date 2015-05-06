@@ -71,7 +71,6 @@
     (distance-to-horizon observer (props/celestial-body)))
   ([observer body]
     (let [o-p (coord/coordinate-frame observer :llh)
-          _ (println o-p)
           r (geo-radius observer body)]
       (coord/rad->deg (Math/acos (/ r (+ r (:height o-p))))))))
 
