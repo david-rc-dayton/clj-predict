@@ -3,19 +3,6 @@
   (:require [clj-predict.coordinates :as coord]
             [clj-predict.properties :as props]))
 
-(defn geo-radius
-  ([coord]
-    (geo-radius coord (props/celestial-body)))
-  ([coord body]
-    (let [phi (:phi (coord/coordinate-frame coord :llh-rad))
-          a (:semi-major-axis (props/celestial-body body))
-          b (:semi-minor-axis (props/celestial-body body))]
-      (-> (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
-                (Math/pow (* b b (Math/sin phi)) 2))
-             (+ (Math/pow (* a (Math/cos phi)) 2)
-                (Math/pow (* b (Math/sin phi)) 2)))
-        (Math/sqrt)))))
-
 (defn adist-haversine
   [start-point end-point]
   (let [s-p (coord/coordinate-frame start-point :llh-rad)
@@ -71,7 +58,7 @@
     (distance-to-horizon observer (props/celestial-body)))
   ([observer body]
     (let [o-p (coord/coordinate-frame observer :llh)
-          r (geo-radius observer body)]
+          r (coord/geo-radius observer body)]
       (coord/rad->deg (Math/acos (/ r (+ r (:height o-p))))))))
 
 (defn surface-visible?
@@ -153,8 +140,8 @@
         D (coord/rad->deg
             (Math/acos (+ (* (Math/sin A) (Math/sin B))
                           (* (Math/cos A) (Math/cos B) (Math/cos L)))))
-        K (/ (+ (geo-radius sat) (:height sat))
-             (+ (geo-radius es) (:height es)))
+        K (/ (+ (coord/geo-radius sat) (:height sat))
+             (+ (coord/geo-radius es) (:height es)))
         D-prime (coord/deg->rad (- 90 D))]
     (coord/rad->deg (Math/atan (- (Math/tan D-prime)
                                   (/ 1 (* K (Math/cos D-prime))))))))
