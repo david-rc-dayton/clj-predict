@@ -139,20 +139,21 @@
   ([coord]
     (coordinate-frame coord @coordinate-default))
   ([coord output]
-    (let [in-coord-type (coordinate-type coord)
+    (let [t-coord (if (:t coord) coord (merge coord {:t (java.util.Date.)}))
+          in-coord-type (coordinate-type t-coord)
           input-coord-map (get @coordinate-references in-coord-type)
           output-coord-map (get @coordinate-references output)]
       ; throw exception if either coordinate type is unknown
       (when (nil? input-coord-map)
         (throw (Exception. (str "***coordinate reference frame unknown*** "
-                                (keys coord)))))
+                                (keys t-coord)))))
       (when (nil? output-coord-map)
         (throw (Exception. (str "***coordinate reference frame unknown*** "
                                 output))))
       ; do nothing if already the correct type
       (if (= in-coord-type output)
-        coord
+        t-coord
         ; otherwise, complete the conversion
         (let [input-fn (:input input-coord-map)
               output-fn (:output output-coord-map)]
-          (-> (input-fn coord) (output-fn)))))))
+          (-> (input-fn t-coord) (output-fn)))))))
