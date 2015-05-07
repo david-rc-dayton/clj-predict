@@ -1,6 +1,7 @@
 (ns clj-predict.coordinates
   "Functions for coordinate system transforms."
-  (:require [clj-predict.properties :as props]))
+  (:require [clj-predict.properties :as props]
+            [clj-predict.time :as time]))
 
 ;;;; Default Values ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -38,19 +39,19 @@
         (Math/sqrt)))))
 
 (defn geodetic->geodetic-rad
-  [{:keys [lat lon alt t]}]
+  [{:keys [lat lon alt t] :as coord}]
   (let [phi (deg->rad lat)
-        lambda (deg->rad lon)]
-    {:phi phi :lam lambda :h alt :t t}))
+        lam (deg->rad lon)]
+    {:phi phi :lam lam :h alt :t t}))
 
 (defn geodetic-rad->geodetic
-  [{:keys [phi lam h t]}]
+  [{:keys [phi lam h t] :as coord}]
   (let [lat (rad->deg phi)
         lon (rad->deg lam)]
     {:lat lat :lon lon :alt h :t t}))
 
 (defn ecef->geodetic-rad
-  [{:keys [x y z t]}]
+  [{:keys [x y z t] :as coord}]
   (let [epsilon 1e-10
         wgs84 (props/celestial-body :earth)
         a (:semi-major-axis wgs84)
@@ -89,7 +90,7 @@
               {:phi phi :lam lam :h h :t t})))))))
 
 (defn geodetic-rad->ecef
-  [{:keys [phi lam h t]}]
+  [{:keys [phi lam h t] :as coord}]
   (let [wgs84 (props/celestial-body :earth)
         re (:semi-major-axis wgs84)
         e-squared (:ecc-squared wgs84)
@@ -102,6 +103,16 @@
      :y (* (+ n h) cos-phi sin-lam)
      :z (* (+ (* n (- 1 e-squared)) h) sin-phi)
      :t t}))
+
+(defn geodetic-rad->eci
+  [{:keys [phi lam h t] :as coord}]
+  (let [d (+ h (geo-radius coord))
+        theta (+ lam (time/local-sidereal t))
+        k (* d (Math/sin phi))
+        r (* d (Math/cos phi))
+        i (* r (Math/cos theta))
+        j (* r (Math/sin theta))]
+    {:i i :j j :k k :t t}))
 
 ;;;; Helper Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -120,7 +131,7 @@
                         :format #{:x :y :z :t}}
          ; Earth-Centered Inertial
          :eci          {:input nil
-                        :output nil
+                        :output geodetic-rad->eci
                         :format #{:i :j :k :t}}}))
 
 (defn coordinate-referencess!
