@@ -18,10 +18,20 @@
         java.lang.String (.parse sd date)))))
 
 (defn date->epoch-days
-  [date]
-  (double (/ (.getTime date) 1000 60 60 24)))
+  ([]
+    (date->epoch-days (java.util.Date.)))
+  ([date]
+    (double (/ (.getTime date) 1000 60 60 24))))
 
 (def j2000 (date->epoch-days (date-format "00-001 12:00:00")))
+
+(defn gmst
+  ([]
+    (gmst (java.util.Date.)))
+  ([date]
+    (let [delta (- (date->epoch-days date) j2000)]
+      (* (/ Math/PI 180)
+         (-> (+ 280.46061837 (* 360.98564736629 delta)) (mod 360))))))
 
 (defn local-sidereal
   ([]

@@ -106,13 +106,24 @@
 
 (defn geodetic-rad->eci
   [{:keys [phi lam h t] :as coord}]
-  (let [d (+ h (geo-radius coord))
-        theta (+ lam (time/local-sidereal t))
-        k (* d (Math/sin phi))
-        r (* d (Math/cos phi))
-        i (* r (Math/cos theta))
-        j (* r (Math/sin theta))]
+  (let [g (time/gmst t)
+        e (geodetic-rad->ecef coord)
+        i (+ (* (:x e) (Math/cos g))
+             (- (* (:y e) (Math/sin g))))
+        j (+ (* (:x e) (Math/sin g))
+             (* (:y e) (Math/cos g)))
+        k (:z e)]
     {:i i :j j :k k :t t}))
+
+(defn eci->geodetic-rad
+  [{:keys [i j k t] :as coord}]
+  (let [g (time/gmst t)
+        x (+ (* i (Math/cos g))
+             (* j (Math/sin g)))
+        y (+ (- (* i (Math/sin g)))
+             (* j (Math/cos g)))
+        z k]
+    (ecef->geodetic-rad {:x x :y y :z z :t t})))
 
 ;;;; Helper Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -130,7 +141,7 @@
                         :output geodetic-rad->ecef
                         :format #{:x :y :z :t}}
          ; Earth-Centered Inertial
-         :eci          {:input nil
+         :eci          {:input eci->geodetic-rad
                         :output geodetic-rad->eci
                         :format #{:i :j :k :t}}}))
 
