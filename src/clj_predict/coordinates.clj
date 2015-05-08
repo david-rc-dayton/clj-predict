@@ -179,3 +179,39 @@
         (let [input-fn (:input input-coord-map)
               output-fn (:output output-coord-map)]
           (-> (input-fn t-coord) (output-fn)))))))
+
+(defn dot
+  [x y]
+  (->> (interleave x y) (partition 2 2)
+    (map #(apply * %)) (reduce +)))
+
+(defn cross
+  [x y]
+  (when (= (count x) (count y) 3)
+    (let [c-fn #(- (* (nth x %1) (nth y %2)) (* (nth x %3) (nth y %4)))
+          c1 [1 2 0]
+          c2 [2 0 1]]
+      (map c-fn c1 c2 c2 c1))))
+
+(defn quaternion-normalize
+  [q]
+  (let [mag (Math/sqrt (reduce + (map * q)))]
+    (map #(/ % mag) q)))
+
+(defn quaternion-product
+  [p q]
+  (when (= (count p) (count q) 4)
+    (let [dp (dot (rest p) (rest q))
+          cp (cross (rest p) (rest q))
+          poq (map #(* (first p) %) (rest q))
+          qop (map #(* (first q) %) (rest p))
+          sum (map #(+ %1 %2 %3) poq qop cp)
+          st (- (* (first p) (first q)) dp)]
+      (conj sum st))))
+
+(defn quaternion-conjugate
+  [q]
+  (when (= (count q) 4)
+    (let [st (first q)
+          en (map #(* -1 %) (rest q))]
+      (conj en st))))
