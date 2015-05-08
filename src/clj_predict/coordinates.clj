@@ -180,6 +180,8 @@
               output-fn (:output output-coord-map)]
           (-> (input-fn t-coord) (output-fn)))))))
 
+;;;; Quaternions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn dot
   [x y]
   (->> (interleave x y) (partition 2 2)

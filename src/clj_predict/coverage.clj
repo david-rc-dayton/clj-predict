@@ -2,6 +2,8 @@
   "Matrix generation functions for satellite coverage analysis. Operations work
    primarily in radians.")
 
+;;;; Constants ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def pi
   "Value of *π*."
   (Math/PI))
@@ -20,6 +22,8 @@
   (let [k [0   1   2   3   4   5   :default]
         v ["." ":" "=" "%" "+" "V" "@"]]
     (atom (zipmap k (map #(str % " ") v)))))
+
+;;;; Terminal Display ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn merge-ascii-legend!
   "Merge the current `ascii-legend` with a new character map, for use in the
@@ -43,19 +47,7 @@
         str-fn #(apply str (map replace-fn %))]
     (dorun (map #(println (str-fn %)) m))))
 
-(defn rangef
-  "Modified `range` function to create arrays of floating-point values with the
-   correct number of elements. Takes three arguments:
-
-   > `start` - starting point of the range  
-   > `end` - ending point of the range  
-   > `step` - amount to increment or decrement each number in the sequence
-
-   Returns a list of floating-point numbers."
-  [start end step]
-  (map #(+ start (* % step))
-       (range 0 (/ (Math/abs (- end start))
-                   (Math/abs step)) 1)))
+;;;; Coverage Element Operations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn cov-cosine
   "Calculate the angular distance between two points using the *Law of Cosines*.
@@ -121,6 +113,22 @@
     (fn [gnd-lat gnd-lon]
       (if (<= (view-method sat-lat sat-lon gnd-lat gnd-lon)
               view-limit) 1 0))))
+
+;;;; Coverage Matrix Operations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn rangef
+  "Modified `range` function to create arrays of floating-point values with the
+   correct number of elements. Takes three arguments:
+
+   > `start` - starting point of the range  
+   > `end` - ending point of the range  
+   > `step` - amount to increment or decrement each number in the sequence
+
+   Returns a list of floating-point numbers."
+  [start end step]
+  (map #(+ start (* % step))
+       (range 0 (/ (Math/abs (- end start))
+                   (Math/abs step)) 1)))
 
 (defn blank-matrix
   "Generate a blank coverage matrix. Takes the argument:

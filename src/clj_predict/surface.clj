@@ -3,6 +3,8 @@
   (:require [clj-predict.coordinates :as coord]
             [clj-predict.properties :as props]))
 
+;;;; Angular Distance ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn adist-haversine
   [start-point end-point]
   (let [s-p (coord/coordinate-frame start-point :geodetic-rad)
@@ -69,6 +71,8 @@
           limit (distance-to-horizon observer body)]
       (<= (adist-fn observer ground) limit))))
 
+;;;; Angular Diameter ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn adiam-sphere
   "Calculate the angular diameter of a sphere, given the `distance` from the
    observer to the sphere's center, and the sphere's `diameter`. Both `distance`
@@ -113,6 +117,8 @@
   [shape distance diameter]
   (let [adiam-fn (get adiam-methods shape)]
     (adiam-fn distance diameter)))
+
+;;;; Look Angle ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn azimuth
   [earth-station satellite]

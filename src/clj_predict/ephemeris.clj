@@ -4,6 +4,8 @@
    satellite ephemeris propagation library."
   (:import [uk.me.g4dpz.satellite SatelliteFactory TLE]))
 
+;;;; NORAD TLE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn str->tle
   "Convert a *Two Line Element (TLE)* set, into a usable `predict4java` TLE
    object. Takes a single vector containing text strings of the form
@@ -40,6 +42,8 @@
          (not (clojure.string/blank? (.trim first-line)))
          (not (clojure.string/blank? (.trim second-line)))
          (every? true? (map valid? tle-clean)))))
+
+;;;; SGP4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn propagate
   "Propagate satellite ephemeris using a *Two Line Element (TLE)* set. Takes two

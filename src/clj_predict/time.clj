@@ -1,11 +1,15 @@
 (ns clj-predict.time
   "Helper functions for dealing with time.")
 
+;;;; Default Values ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def pattern-default (atom "yy-DDD HH:mm:ss"))
 
 (defn pattern-default!
   [s]
   (reset! pattern-default s))
+
+;;;; Date Parsing/Formatting ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn now
   []
@@ -26,6 +30,8 @@
     (let [sd (doto (java.text.SimpleDateFormat. pattern)
                (.setTimeZone (java.util.TimeZone/getTimeZone "UTC")))]
       (.format sd date))))
+
+;;;; Epoch ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn date->epoch-days
   [date]
