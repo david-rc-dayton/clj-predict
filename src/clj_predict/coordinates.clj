@@ -5,7 +5,8 @@
 
 ;;;; Default Values ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(declare coordinate-frame)
+(declare coordinate)
+(declare coordinate-type)
 
 (def coordinate-default (atom :geodetic))
 
@@ -29,7 +30,7 @@
   ([coord]
     (geo-radius coord (props/celestial-body)))
   ([coord body]
-    (let [phi (:phi (coordinate-frame coord :geodetic-rad))
+    (let [phi (:phi (coordinate coord :geodetic-rad))
           a (:semi-major-axis (props/celestial-body body))
           b (:semi-minor-axis (props/celestial-body body))]
       (-> (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
@@ -125,6 +126,21 @@
         z k]
     (ecef->geodetic-rad {:x x :y y :z z :t t})))
 
+(defn wrap-geodetic
+  [coord]
+  (let [t (coordinate-type coord)
+        d (condp = t
+            :geodetic     {:k :lon :fn identity}
+            :geodetic-rad {:k :lam :fn deg->rad})
+        k (:k d)
+        f (:fn d)
+        v (get coord k)
+        pl (cond
+             (> v (f 180)) (- v (f 360))
+             (< v (f 0))   (+ v (f 360))
+             :else v)]
+    (merge coord {k pl})))
+
 ;;;; Helper Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def coordinate-references
@@ -157,9 +173,9 @@
     (key (or (first (filter match? @coordinate-references))
              (first {:unknown nil})))))
 
-(defn coordinate-frame
+(defn coordinate
   ([coord]
-    (coordinate-frame coord @coordinate-default))
+    (coordinate coord @coordinate-default))
   ([coord output]
     (let [t-coord (if (:t coord) coord (merge coord {:t (java.util.Date.)}))
           in-coord-type (coordinate-type t-coord)

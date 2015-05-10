@@ -2,7 +2,14 @@
   "Clojure wrapper to the *predict4java*
    [SGP4](http://en.wikipedia.org/wiki/Simplified_perturbations_models)
    satellite ephemeris propagation library."
+  (:require [clj-predict.coordinates :as coord]
+            [clj-predict.time :as time])
   (:import [uk.me.g4dpz.satellite SatelliteFactory TLE]))
+
+(def iss
+  ["ISS (ZARYA)"
+   "1 25544U 98067A   15129.86961041  .00015753  00000-0  23097-3 0  9998"
+   "2 25544  51.6464 275.3867 0006524 289.1638 208.5861 15.55704207942078"])
 
 ;;;; NORAD TLE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -46,24 +53,23 @@
 ;;;; SGP4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn propagate
-  "Propagate satellite ephemeris using a *Two Line Element (TLE)* set. Takes two
-   arguments:
-
-   > `tle` - Vector containing tle data (see `valid-tle?`)  
-   > `date` - A `java.util.Date` object used as the propagation date
-
-   Returns the satellite's location as a map containing the keys
-   `:lat :lon :alt`, in degrees and meters."
-  ([[name first-line second-line :as tle] date]
-    (let [tle (str->tle tle)
-          factory (doto (SatelliteFactory/createSatellite tle)
+  [tle date]
+  (let [sat-tle (str->tle tle)
+        date-delta (-> (.getTime date) (+ 1000) (java.util.Date.))
+        factory-1 (doto (SatelliteFactory/createSatellite sat-tle)
                     (.calculateSatelliteVectors date))
-          position (.calculateSatelliteGroundTrack factory)
-          latitude (Math/toDegrees (.getLatitude position))
-          temp-longitude (Math/toDegrees (.getLongitude position))
-          longitude (cond
-                      (> temp-longitude 180) (- temp-longitude 360)
-                      (< temp-longitude 0) (+ temp-longitude 360)
-                      :else temp-longitude)
-          altitude (*  (.getAltitude position) 1000)]
-      {:lat latitude :lon longitude :alt altitude})))
+        factory-2 (doto (SatelliteFactory/createSatellite sat-tle)
+                    (.calculateSatelliteVectors date-delta))
+        tmp-1 (.calculateSatelliteGroundTrack factory-1)
+        tmp-2 (.calculateSatelliteGroundTrack factory-2)
+        loc-1 (coord/wrap-geodetic
+                {:phi (.getLatitude tmp-1) :lam (.getLongitude tmp-1)
+                 :h (* 1000 (.getAltitude tmp-1)) :t date})
+        loc-2 (coord/wrap-geodetic 
+                {:phi (.getLatitude tmp-2) :lam (.getLongitude tmp-2)
+                 :h (* 1000 (.getAltitude tmp-2)) :t date-delta})
+        eci-1 (coord/coordinate loc-1 :eci)
+        eci-2 (coord/coordinate loc-2 :eci)
+        vel-delta {:i (- (:i eci-2) (:i eci-1)) :j (- (:j eci-2) (:j eci-1))
+                   :k (- (:k eci-2) (:k eci-1)) :t date}]
+    {:r eci-1 :v vel-delta}))
