@@ -206,15 +206,16 @@
 (defn cross
   [mx my]
   (when (= (count mx) (count my) 3)
-    (let [c-fn #(- (* (nth x %1) (nth y %2)) (* (nth x %3) (nth y %4)))
+    (let [c-fn #(- (* (nth mx %1) (nth my %2))
+                   (* (nth mx %3) (nth my %4)))
           c1 [1 2 0]
           c2 [2 0 1]]
       (map c-fn c1 c2 c2 c1))))
 
 (defn magnitude
   [v]
-  (let [mag (Math/sqrt (reduce + (map * q)))]
-    (map #(/ % mag) q)))
+  (let [mag (Math/sqrt (reduce + (map * v)))]
+    (map #(/ % mag) v)))
 
 ;;;; Quaternions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
