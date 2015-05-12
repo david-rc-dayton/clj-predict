@@ -196,25 +196,27 @@
               output-fn (:output output-coord-map)]
           (-> (input-fn t-coord) (output-fn)))))))
 
-;;;; Quaternions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Vector Ops ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn dot
-  [x y]
-  (->> (interleave x y) (partition 2 2)
+  [mx my]
+  (->> (interleave mx my) (partition 2 2)
     (map #(apply * %)) (reduce +)))
 
 (defn cross
-  [x y]
-  (when (= (count x) (count y) 3)
+  [mx my]
+  (when (= (count mx) (count my) 3)
     (let [c-fn #(- (* (nth x %1) (nth y %2)) (* (nth x %3) (nth y %4)))
           c1 [1 2 0]
           c2 [2 0 1]]
       (map c-fn c1 c2 c2 c1))))
 
-(defn quaternion-normalize
-  [q]
+(defn magnitude
+  [v]
   (let [mag (Math/sqrt (reduce + (map * q)))]
     (map #(/ % mag) q)))
+
+;;;; Quaternions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn quaternion-product
   [p q]
