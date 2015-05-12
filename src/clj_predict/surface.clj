@@ -7,8 +7,8 @@
 
 (defn adist-haversine
   [start-point end-point]
-  (let [s-p (coord/coordinate-frame start-point :geodetic-rad)
-        e-p (coord/coordinate-frame end-point :geodetic-rad)
+  (let [s-p (coord/coordinate start-point :geodetic-rad)
+        e-p (coord/coordinate end-point :geodetic-rad)
         p1 (:phi s-p)
         p2 (:phi e-p)
         delta-p (- (:phi e-p) (:phi s-p))
@@ -20,8 +20,8 @@
 
 (defn adist-cosine
   [start-point end-point]
-  (let [s-p (coord/coordinate-frame start-point :geodetic-rad)
-        e-p (coord/coordinate-frame end-point :geodetic-rad)
+  (let [s-p (coord/coordinate start-point :geodetic-rad)
+        e-p (coord/coordinate end-point :geodetic-rad)
         p1 (:phi s-p)
         p2 (:phi e-p)
         delta-l (- (:lam e-p) (:lam s-p))]
@@ -31,8 +31,8 @@
 
 (defn adist-equirect
   [start-point end-point]
-  (let [s-p (coord/coordinate-frame start-point :geodetic)
-        e-p (coord/coordinate-frame end-point :geodetic)
+  (let [s-p (coord/coordinate start-point :geodetic)
+        e-p (coord/coordinate end-point :geodetic)
         delta-lon (- (:lon e-p) (:lon s-p))
         lat-m (/ (+ (:lat e-p) (:lat s-p)) 2)
         x (* delta-lon (Math/cos (coord/deg->rad lat-m)))
@@ -59,7 +59,7 @@
   ([observer]
     (distance-to-horizon observer (props/celestial-body)))
   ([observer body]
-    (let [o-p (coord/coordinate-frame observer :geodetic-rad)
+    (let [o-p (coord/coordinate observer :geodetic-rad)
           r (coord/geo-radius observer body)]
       (coord/rad->deg (Math/acos (/ r (+ r (:h o-p))))))))
 
@@ -122,8 +122,8 @@
 
 (defn azimuth
   [earth-station satellite]
-  (let [es (coord/coordinate-frame earth-station :geodetic-rad)
-        sat (coord/coordinate-frame satellite :geodetic-rad)
+  (let [es (coord/coordinate earth-station :geodetic-rad)
+        sat (coord/coordinate satellite :geodetic-rad)
         Le (:phi es)
         Ls (:phi sat)
         ls-le (- (:lam sat) (:lam es))
@@ -134,8 +134,8 @@
 
 (defn elevation
   [earth-station satellite]
-  (let [es (coord/coordinate-frame earth-station :geodetic)
-        sat (coord/coordinate-frame satellite :geodetic)
+  (let [es (coord/coordinate earth-station :geodetic)
+        sat (coord/coordinate satellite :geodetic)
         A (coord/deg->rad (:lat es))
         B (coord/deg->rad (:lat sat))
         Lt (- (:lon es) (:lon sat))
@@ -154,8 +154,8 @@
 
 (defn distance
   [earth-station satellite]
-  (let [es (coord/coordinate-frame earth-station :ecef)
-        sat (coord/coordinate-frame satellite :ecef)
+  (let [es (coord/coordinate earth-station :ecef)
+        sat (coord/coordinate satellite :ecef)
         x-delta (Math/pow (- (:x es) (:x sat)) 2)
         y-delta (Math/pow (- (:y es) (:y sat)) 2)
         z-delta (Math/pow (- (:z es) (:z sat)) 2)]
@@ -171,9 +171,9 @@
 
 (defn aspect-angle
   [origin point-one point-two]
-  (let [a (coord/coordinate-frame origin :ecef)
-        b (coord/coordinate-frame point-one :ecef)
-        c (coord/coordinate-frame point-two :ecef)
+  (let [a (coord/coordinate origin :ecef)
+        b (coord/coordinate point-one :ecef)
+        c (coord/coordinate point-two :ecef)
         mag-fn (fn [{:keys [x y z]}]
                  (Math/sqrt (+ (* x x) (* y y) (* z z))))
         a-b {:x (- (:x a) (:x b))
