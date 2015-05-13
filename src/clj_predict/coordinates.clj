@@ -214,7 +214,11 @@
 
 (defn magnitude
   [v]
-  (let [mag (Math/sqrt (reduce + (map * v)))]
+  (Math/sqrt (reduce + (map #(* % %) v))))
+
+(defn normalize
+  [v]
+  (let [mag (magnitude v)]
     (map #(/ % mag) v)))
 
 ;;;; Quaternions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
