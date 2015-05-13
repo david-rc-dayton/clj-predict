@@ -22,7 +22,7 @@
      :coeff-flat f :ecc-squared e :m m :mu mu}))
 
 (def celestial-bodies
-  (atom {:earth   (celestial-body-factory   6378137 0.0033528 5.97219e24)
+  (atom {:earth   (celestial-body-factory   6378137 0.0033528 5.97258e24)
          :moon    (celestial-body-factory   1738130   0.00125  7.3477e22)
          :sun     (celestial-body-factory 696342000  0.000009 1.98855e30)
          :mercury (celestial-body-factory   2439700         0  3.3022e23)

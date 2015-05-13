@@ -4,6 +4,19 @@
             [clj-predict.properties :as props]
             [clj-predict.time :as time]))
 
+;;;; Orbit Properties ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn mechanical-energy
+  ([state-vector]
+    (mechanical-energy state-vector (props/celestial-body)))
+  ([state-vector body]
+    (let [b (props/celestial-body body)
+          r (coord/magnitude (:r state-vector))
+          v (coord/magnitude (:v state-vector))
+          v-sq (* v v)
+          mu (:mu b)]
+      (- (/ v-sq 2) (/ mu r)))))
+
 ;;;; Keplerian Elements ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn eccentricity
@@ -19,24 +32,13 @@
           e (map #(/ % (coord/magnitude r)) r)]
       (map #(- %1 %2) s e))))
 
-(defn orbital-energy
-  ([state-vector]
-    (orbital-energy state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [b (props/celestial-body body)
-          r (coord/magnitude (:r state-vector))
-          v (coord/magnitude (:v state-vector))
-          v-sq (* v v)
-          mu (:mu b)]
-      (- (/ v-sq 2) (/ mu r)))))
-
 (defn semi-major-axis
   ([state-vector]
     (semi-major-axis state-vector (props/celestial-body)))
   ([state-vector body]
     (let [b (props/celestial-body body)
           mu (:mu b)
-          ep (orbital-energy state-vector body)]
+          ep (mechanical-energy state-vector body)]
       (- (/ mu (* 2 ep))))))
 
 (defn inclination
