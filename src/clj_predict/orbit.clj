@@ -6,6 +6,21 @@
 
 ;;;; Orbit Properties ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn period
+  ([semi-major-axis]
+    (period semi-major-axis (props/celestial-body)))
+  ([semi-major-axis body]
+    (let [a (double semi-major-axis)
+          b (props/celestial-body body)
+          mu (:mu b)]
+      (/ (* 2 Math/PI (Math/sqrt (/ (* a a a) mu))) 86400))))
+
+(defn revolutions
+  ([semi-major-axis]
+    (revolutions semi-major-axis (props/celestial-body)))
+  ([semi-major-axis body]
+    (double (/ 1 (period semi-major-axis body)))))
+
 (defn mechanical-energy
   ([state-vector]
     (mechanical-energy state-vector (props/celestial-body)))
