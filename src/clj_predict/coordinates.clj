@@ -1,5 +1,5 @@
 (ns clj-predict.coordinates
-  "Functions for coordinate system transforms."
+  "Functions for working with coordinates and their transforms."
   (:require [clj-predict.properties :as props]
             [clj-predict.time :as time]))
 
@@ -8,25 +8,45 @@
 (declare coordinate)
 (declare coordinate-type)
 
-(def coordinate-default (atom :geodetic))
+(def coordinate-default
+  "Default coordinate frame to return from *clj-predict* functions. Change
+   globally using the `coordinate-default!` function; defaults to `:geodetic`.
+   See `coordinate-references` for more options."
+  (atom :geodetic))
 
 (defn coordinate-default!
+  "Change the global default coordinate reference frame. For example:
+
+   To set the default output to Earth Centered Intertial (ECI) coordinates,
+   > `(coordinate-default! :eci)`"
   [k]
   (reset! coordinate-default k))
 
 ;;;; Coordinate Transforms ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn deg->rad 
-  "Converts argument `deg` from degrees to radians."
+  "Convert from degrees to radians. For example:
+
+   >  `(deg->rad 180) ;=> 3.141592653589793`"
   [deg]
   (* deg (/ Math/PI 180)))
 
 (defn rad->deg
-  "Converts argument `rad` from radians to degrees."
+  "Convert from radians to degrees. For example:
+
+   > `(rad->deg Math/PI) ;=> 180.0`"
   [rad]
   (* rad (/ 180 Math/PI)))
 
 (defn geo-radius
+  "Calculate the radius of a celestial body, in meters, at a given coordinate.
+   Body defualts to `:earth`. For example:
+
+   To calculate the Earth's radius at *[45N 90W]*:
+   > `(geo-radius {:lat 45 :lon -90 :alt 0}) ;=> 6367489.577588282`
+
+   To calculate Mars' radius at the Meridian:
+   > `(geo-radius {:phi 0 :lam 0 :h 0} :mars) ;=> 3396200.0`"
   ([coord]
     (geo-radius coord (props/celestial-body)))
   ([coord body]
@@ -40,12 +60,22 @@
         (Math/sqrt)))))
 
 (defn geodetic->geodetic-rad
+  "Convert Geodetic coordinates from degrees to radians. For example:
+
+   Convert *[10S 25E]* from degrees to radians:
+   > `(geodetic->geodetic-rad {:lat -10 :lon 25 :alt 0})`  
+   > `;=> {:phi -0.17453292519943295, :lam 0.4363323129985824, :h 0}`"
   [{:keys [lat lon alt t] :as coord}]
   (let [phi (deg->rad lat)
         lam (deg->rad lon)]
     {:phi phi :lam lam :h alt :t t}))
 
 (defn geodetic-rad->geodetic
+  "Convert Geodetic coordinates from radians to degrees. For example:
+
+   Convert *[-1φ 3λ]* from radians to degrees:
+   > `(geodetic-rad->geodetic {:phi -1 :lam 3 :h 0})`  
+   > `;=> {:lat -57.29577951308232, :lon 171.88733853924697, :alt 0}`"
   [{:keys [phi lam h t] :as coord}]
   (let [lat (rad->deg phi)
         lon (rad->deg lam)]

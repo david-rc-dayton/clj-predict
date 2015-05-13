@@ -1,13 +1,8 @@
 (ns clj-predict.core
-  "Contains aliases to common *clj-predict* functions."
-  (:require [clj-predict.body :as bod]
-            [clj-predict.coverage :as cov]
-            [clj-predict.helper :as help]
-            [clj-predict.propagation :as prop]
-            [clj-predict.solar :as sol]))
+  "Contains aliases to common *clj-predict* functions.")
 
 ;;;; clj-predict.coordinates ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+(comment
 (defn geo-radius
   "Alias for `clj-predict.body/geo-radius`."
   [& rest]
@@ -78,3 +73,4 @@
   "Alias for `clj-predict.solar/solar-position`."
   [& rest]
   (apply sol/solar-position rest))
+)
