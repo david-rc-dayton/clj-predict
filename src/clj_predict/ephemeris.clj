@@ -182,7 +182,7 @@
           ea (coord/deg->rad (eccentric-anomaly state-vector body))]
       (coord/rad->deg (- ea (* e (Math/sin ea)))))))
 
-(defn orbital-elements
+(defn rv->kepler
   ([state-vector]
     (orbital-elements state-vector (props/celestial-body)))
   ([state-vector body]
