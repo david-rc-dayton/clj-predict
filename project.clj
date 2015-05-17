@@ -6,6 +6,4 @@
             :distribution :repo}
   :deploy-repositories {"clojars" {:sign-releases false}}
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [uk.me.g4dpz/predict4java "1.1.3"]]
-  :profiles {:dev {:plugins [[codox "0.8.12"]]
-                   :codox {:defaults {:doc/format :markdown}}}})
+                 [uk.me.g4dpz/predict4java "1.1.3"]])
