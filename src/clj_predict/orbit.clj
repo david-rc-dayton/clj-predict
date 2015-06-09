@@ -7,11 +7,12 @@
 ;;;; Orbit Properties ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn period
+  "Return "
   ([semi-major-axis]
     (period semi-major-axis (props/celestial-body)))
   ([semi-major-axis body]
     (let [a (double semi-major-axis)
-          b (props/celestial-body body)
+          b (props/celestial-map body)
           mu (:mu b)]
       (/ (* 2 Math/PI (Math/sqrt (/ (* a a a) mu))) 86400))))
 
@@ -25,7 +26,7 @@
   ([state-vector]
     (mechanical-energy state-vector (props/celestial-body)))
   ([state-vector body]
-    (let [b (props/celestial-body body)
+    (let [b (props/celestial-map body)
           r (coord/magnitude (:r state-vector))
           v (coord/magnitude (:v state-vector))
           v-sq (* v v)
@@ -38,7 +39,7 @@
   ([state-vector]
     (eccentricity state-vector (props/celestial-body)))
   ([state-vector body]
-    (let [b (props/celestial-body body)
+    (let [b (props/celestial-map body)
           r (:r state-vector)
           v (:v state-vector)
           h (coord/cross r v)
@@ -51,7 +52,7 @@
   ([state-vector]
     (semi-major-axis state-vector (props/celestial-body)))
   ([state-vector body]
-    (let [b (props/celestial-body body)
+    (let [b (props/celestial-map body)
           mu (:mu b)
           ep (mechanical-energy state-vector body)]
       (- (/ mu (* 2 ep))))))
@@ -106,7 +107,7 @@
     (let [e (coord/magnitude (eccentricity state-vector body))
           n (coord/deg->rad (true-anomaly state-vector body))
           ea (Math/acos (/ (+ e (Math/cos n))
-                          (+ 1 (* e (Math/cos n)))))]
+                           (+ 1 (* e (Math/cos n)))))]
       (coord/rad->deg (if (>= n Math/PI) (- (* 2 Math/PI) ea) ea)))))
 
 (defn mean-anomaly
@@ -122,9 +123,9 @@
     (rv->kepler state-vector (props/celestial-body)))
   ([state-vector body]
     {:t (:t state-vector)
-     :e (coord/magnitude (eccentricity state-vector body))
      :a (semi-major-axis state-vector body)
+     :e (coord/magnitude (eccentricity state-vector body))
      :i (inclination state-vector)
      :o (ascending-node state-vector)
      :w (argument-periapsis state-vector body)
-     :m (mean-anomaly state-vector body)}))
+     :v (true-anomaly state-vector body)}))

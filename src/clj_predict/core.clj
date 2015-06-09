@@ -2,7 +2,6 @@
   "Contains aliases to common *clj-predict* functions.")
 
 ;;;; clj-predict.coordinates ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
 (defn geo-radius
   "Alias for `clj-predict.body/geo-radius`."
   [& rest]
@@ -73,4 +72,3 @@
   "Alias for `clj-predict.solar/solar-position`."
   [& rest]
   (apply sol/solar-position rest))
-)
