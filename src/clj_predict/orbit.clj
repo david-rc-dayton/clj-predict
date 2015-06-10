@@ -7,7 +7,6 @@
 ;;;; Orbit Properties ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn period
-  "Return "
   ([semi-major-axis]
     (period semi-major-axis (props/celestial-body)))
   ([semi-major-axis body]
@@ -71,7 +70,8 @@
         k [0 0 1]
         h (coord/cross r v)
         n (coord/cross k h)
-        o (Math/acos (/ (nth n 0) (coord/magnitude n)))]
+        mag-n (coord/magnitude n)
+        o (if (zero? mag-n) 0 (Math/acos (/ (nth n 0) mag-n)))]
     (coord/rad->deg (if (>= (nth n 1) 0) o (- (* 2 Math/PI) o)))))
 
 (defn argument-periapsis
@@ -83,9 +83,13 @@
           k [0 0 1]
           h (coord/cross r v)
           n (coord/cross k h)
+          mag-n (coord/magnitude n)
           e (eccentricity state-vector body)
-          w (Math/acos (/ (coord/dot n e)
-                          (* (coord/magnitude n) (coord/magnitude e))))]
+          mag-e (coord/magnitude e)
+          w (if (or (zero? mag-n) (zero? mag-e))
+              0
+              (Math/acos (/ (coord/dot n e)
+                            (* (coord/magnitude n) (coord/magnitude e)))))]
       (coord/rad->deg (if (< (nth e 2) 0) (- (* 2 Math/PI) w) w)))))
 
 (defn true-anomaly
