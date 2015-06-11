@@ -290,7 +290,7 @@
 
 ;;;; Quaternions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn quaternion-product
+(defn q-product
   [p q]
   (when (= (count p) (count q) 4)
     (let [dp (dot (rest p) (rest q))
@@ -301,7 +301,7 @@
           st (- (* (first p) (first q)) dp)]
       (conj sum st))))
 
-(defn quaternion-conjugate
+(defn q-conjugate
   [q]
   (when (= (count q) 4)
     (let [st (first q)

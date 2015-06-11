@@ -21,115 +21,129 @@
   ([semi-major-axis body]
     (double (/ 1 (period semi-major-axis body)))))
 
-(defn mechanical-energy
-  ([state-vector]
-    (mechanical-energy state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [b (props/celestial-map body)
-          r (coord/magnitude (:r state-vector))
-          v (coord/magnitude (:v state-vector))
-          v-sq (* v v)
-          mu (:mu b)]
-      (- (/ v-sq 2) (/ mu r)))))
-
 ;;;; Keplerian Elements ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn eccentricity
-  ([state-vector]
-    (eccentricity state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [b (props/celestial-map body)
-          r (:r state-vector)
-          v (:v state-vector)
-          h (coord/cross r v)
-          mu (:mu b)
-          s (map #(/ % mu) (coord/cross v h))
-          e (map #(/ % (coord/magnitude r)) r)]
-      (map #(- %1 %2) s e))))
+(defn mechanical-energy
+  ([{:keys [r v] :as state-vectors}]
+    (mechanical-energy state-vectors (props/celestial-body)))
+  ([{:keys [r v] :as state-vectors} body]
+    (let [V-sq (Math/pow (coord/magnitude v) 2)
+          R (coord/magnitude r)
+          mu (:mu (props/celestial-map body))]
+      (- (/ V-sq 2) (/ mu R)))))
 
 (defn semi-major-axis
-  ([state-vector]
-    (semi-major-axis state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [b (props/celestial-map body)
-          mu (:mu b)
-          ep (mechanical-energy state-vector body)]
-      (- (/ mu (* 2 ep))))))
+  ([{:keys [r v] :as state-vectors}]
+    (semi-major-axis state-vectors (props/celestial-body)))
+  ([{:keys [r v] :as state-vectors} body]
+    (let [mu (:mu (props/celestial-map body))
+          en (mechanical-energy state-vectors body)]
+      (- (/ mu (* 2 en))))))
+
+(defn eccentricity-vector
+  ([{:keys [r v] :as state-vectors}]
+    (eccentricity-vector state-vectors (props/celestial-body)))
+  ([{:keys [r v] :as state-vectors} body]
+    (let [V-sq (Math/pow (coord/magnitude v) 2)
+          R (coord/magnitude r)
+          mu (:mu (props/celestial-map body))
+          a (map * (repeat (- (/ V-sq mu) (/ 1 R))) r)
+          b (map * (repeat (/ (coord/dot r v) mu)) v)]
+      (map - a b))))
+
+(defn angular-momentum
+  [{:keys [r v] :as state-vectors}]
+  (coord/cross r v))
 
 (defn inclination
-  [state-vector]
-  (let [r (:r state-vector)
-        v (:v state-vector)
-        h (coord/cross r v)]
-    (coord/rad->deg (Math/acos (/ (nth h 2) (coord/magnitude h))))))
+  [{:keys [r v] :as state-vectors}]
+  (let [H (angular-momentum state-vectors)
+        hk (last H)
+        h (coord/magnitude H)]
+    (coord/rad->deg (Math/acos (/ hk h)))))
 
-(defn ascending-node
-  [state-vector]
-  (let [r (:r state-vector)
-        v (:v state-vector)
-        k [0 0 1]
-        h (coord/cross r v)
-        n (coord/cross k h)
-        mag-n (coord/magnitude n)
-        o (if (zero? mag-n) 0 (Math/acos (/ (nth n 0) mag-n)))]
-    (coord/rad->deg (if (>= (nth n 1) 0) o (- (* 2 Math/PI) o)))))
+(defn node-vector
+  [{:keys [r v] :as state-vectors}]
+  (let [K [0 0 1]
+        H (angular-momentum state-vectors)]
+    (coord/cross K H)))
 
-(defn argument-periapsis
-  ([state-vector]
-    (argument-periapsis state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [r (:r state-vector)
-          v (:v state-vector)
-          k [0 0 1]
-          h (coord/cross r v)
-          n (coord/cross k h)
-          mag-n (coord/magnitude n)
-          e (eccentricity state-vector body)
-          mag-e (coord/magnitude e)
-          w (if (or (zero? mag-n) (zero? mag-e))
-              0
-              (Math/acos (/ (coord/dot n e)
-                            (* (coord/magnitude n) (coord/magnitude e)))))]
-      (coord/rad->deg (if (< (nth e 2) 0) (- (* 2 Math/PI) w) w)))))
+(defn right-ascension
+  [{:keys [r v] :as state-vectors}]
+  (let [N (node-vector state-vectors)
+        ni (first N)
+        nj (second N)
+        n (coord/magnitude N)
+        i (inclination state-vectors)]
+    (if (or (zero? i) (>= i 180)) 0.0
+      (let [raan (coord/rad->deg (Math/acos (/ ni n)))]
+        (if (neg? nj) (- 360 raan) raan)))))
+
+(defn argument-of-perigee
+  ([{:keys [r v] :as state-vectors}]
+    (argument-of-perigee state-vectors (props/celestial-body)))
+  ([{:keys [r v] :as state-vectors} body]
+    (let [N (node-vector state-vectors)
+          E (eccentricity-vector state-vectors body)
+          n (coord/magnitude N)
+          e (coord/magnitude E)
+          ei (first E)
+          ej (second E)
+          ek (last E)
+          i (inclination state-vectors)
+          a (coord/dot N E)
+          b (* n e)]
+      (cond
+        (zero? e) 0.0
+        (or (zero? i) (>= i 180)) (coord/rad->deg (Math/atan2 ej ei))
+        :else (let [aop (coord/rad->deg (Math/acos (/ a b)))]
+                (if (neg? ek) (- 360 aop) aop))))))
+
+(defn argument-of-latitude
+  [{:keys [r v] :as state-vectors}]
+  (let [n (node-vector state-vectors)
+        n-mag (coord/magnitude n)
+        r-mag (coord/magnitude r)
+        n-dot-v (coord/dot n v)
+        a (coord/dot n r)
+        b (* n-mag r-mag)
+        aol (coord/rad->deg (Math/acos (/ a b)))]
+    (if (pos? n-dot-v) (- 360 aol) aol)))
+
+(defn true-longitude
+  [{:keys [r v] :as state-vectors}]
+  (let [ri (first r)
+        vi (first v)
+        rm (coord/magnitude r)
+        tl (coord/rad->deg (Math/acos (/ ri rm)))]
+    (if (pos? vi) (- 360 tl) tl)))
 
 (defn true-anomaly
-  ([state-vector]
-    (true-anomaly state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [e (eccentricity state-vector body)
-          r (:r state-vector)
-          v (:v state-vector)
-          m (coord/dot r v)
-          an (Math/acos (/ (coord/dot e r)
-                           (* (coord/magnitude e) (coord/magnitude r))))]
-      (coord/rad->deg (if (neg? m) (- (* 2 Math/PI) an) an)))))
-
-(defn eccentric-anomaly
-  ([state-vector]
-    (eccentric-anomaly state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [e (coord/magnitude (eccentricity state-vector body))
-          n (coord/deg->rad (true-anomaly state-vector body))
-          ea (Math/acos (/ (+ e (Math/cos n))
-                           (+ 1 (* e (Math/cos n)))))]
-      (coord/rad->deg (if (>= n Math/PI) (- (* 2 Math/PI) ea) ea)))))
-
-(defn mean-anomaly
-  ([state-vector]
-    (mean-anomaly state-vector (props/celestial-body)))
-  ([state-vector body]
-    (let [e (coord/magnitude (eccentricity state-vector body))
-          ea (coord/deg->rad (eccentric-anomaly state-vector body))]
-      (coord/rad->deg (- ea (* e (Math/sin ea)))))))
+  ([{:keys [r v] :as state-vectors}]
+    (true-anomaly state-vectors (props/celestial-body)))
+  ([{:keys [r v] :as state-vectors} body]
+    (let [e-vec (eccentricity-vector state-vectors body)
+          e-mag (coord/magnitude e-vec)
+          r-mag (coord/magnitude r)
+          r-dot-v (coord/dot r v)
+          i (inclination state-vectors)
+          arg-lat? (zero? e-mag)
+          tru-lon? (and (zero? e-mag) (or (zero? i) (>= i 180)))
+          a (coord/dot e-vec r)
+          b (* e-mag r-mag)]
+      (cond
+        tru-lon? (true-longitude state-vectors)
+        arg-lat? (argument-of-latitude state-vectors)
+        :else (let [ta (coord/rad->deg (Math/acos (/ a b)))]
+                (if (neg? r-dot-v) (- 360 ta) ta))))))
 
 (defn rv->kepler
-  ([state-vector]
-    (rv->kepler state-vector (props/celestial-body)))
-  ([state-vector body]
-    {:t (:t state-vector)
-     :a (semi-major-axis state-vector body)
-     :e (coord/magnitude (eccentricity state-vector body))
-     :i (inclination state-vector)
-     :o (ascending-node state-vector)
-     :w (argument-periapsis state-vector body)
-     :v (true-anomaly state-vector body)}))
+  ([{:keys [r v t] :as state-vectors}]
+    (rv->kepler state-vectors (props/celestial-body)))
+  ([{:keys [r v t] :as state-vectors} body]
+    {:a (semi-major-axis state-vectors body)
+     :e (coord/magnitude (eccentricity-vector state-vectors body))
+     :i (inclination state-vectors)
+     :o (right-ascension state-vectors)
+     :w (argument-of-perigee state-vectors body)
+     :v (true-anomaly state-vectors body)}))
