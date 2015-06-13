@@ -60,9 +60,12 @@
 
    Returns the angular distance between two points in radians."
   [phi-1 lam-1 phi-2 lam-2]
-  (let [delta-phi-two (-> (Math/sin (/ (- phi-2 phi-1) 2)) (Math/pow 2))
-        delta-lam-two (-> (Math/sin (/ (- lam-2 lam-1) 2)) (Math/pow 2))
-        a (+ delta-phi-two (* (Math/cos phi-1) (Math/cos phi-2) delta-lam-two))]
+  (let [delta-phi-two (-> (Math/sin (double (/ (- phi-2 phi-1) 2)))
+                        (Math/pow 2))
+        delta-lam-two (-> (Math/sin (double (/ (- lam-2 lam-1) 2)))
+                        (Math/pow 2))
+        a (+ delta-phi-two (* (Math/cos (double phi-1))
+                              (Math/cos (double phi-2)) delta-lam-two))]
     (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))
 
 (defn cov-haversine
@@ -76,12 +79,12 @@
 
    Returns the angular distance between two points in radians."
   [phi-1 lam-1 phi-2 lam-2]
-  (let [delta-phi (Math/sin (* 0.5 (- phi-2 phi-1)))
-        delta-lam (Math/sin (* 0.5 (- lam-2 lam-1)))
+  (let [delta-phi (Math/sin (double (* 0.5 (- phi-2 phi-1))))
+        delta-lam (Math/sin (double (* 0.5 (- lam-2 lam-1))))
         a (+ (* delta-phi delta-phi)
-             (* (Math/cos phi-1) (Math/cos phi-2)
+             (* (Math/cos (double phi-1)) (Math/cos (double phi-2))
                 delta-lam delta-lam))]
-    (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))
+    (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (double (- 1 a)))))))
 
 (def cov-methods
   "Map associating keywords with a method of coverage calculation. Available
@@ -105,10 +108,10 @@
 
      gnd-lat - latitude of the point on the Earth's surface  
      gnd-lon - longitude of the point on the Earth's surface"
-  [method {:keys [lat lon alt]}]
-  (let [sat-lat (* lat (/ pi 180))
-        sat-lon (* lon (/ pi 180))
-        view-limit (Math/acos (/ 6371000 (+ 6371000 alt)))
+  [method [lat lon alt]]
+  (let [sat-lat (double (* lat (/ pi 180)))
+        sat-lon (double (* lon (/ pi 180)))
+        view-limit (Math/acos (double (/ 6371000 (+ 6371000 alt))))
         view-method (get cov-methods method)]
     (fn [gnd-lat gnd-lon]
       (if (<= (view-method sat-lat sat-lon gnd-lat gnd-lon)
