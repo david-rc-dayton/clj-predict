@@ -2,6 +2,7 @@
   "Clojure wrapper to the *predict4java*
    [SGP4](http://en.wikipedia.org/wiki/Simplified_perturbations_models)
    satellite ephemeris propagation library."
+  (:require [clj-predict.coordinates :as coord])
   (:import [uk.me.g4dpz.satellite SatelliteFactory TLE]))
 
 ;;;; NORAD TLE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,7 +46,7 @@
 
 ;;;; SGP4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn propagate
+(defn sgp4
   "Propagate satellite ephemeris using a Two Line Element (TLE) set. Takes two
    arguments:
 
@@ -65,7 +66,7 @@
                 (> temp-lon 180) (- temp-lon 360)
                 (< temp-lon 0) (+ temp-lon 360)
                 :else temp-lon)
-          alt (*  (.getAltitude position) 1000)]
+          alt (.getAltitude position)]
       [lat lon alt])))
 
 ;; Perturbations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

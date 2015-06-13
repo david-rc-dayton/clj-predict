@@ -3,6 +3,12 @@
   (:require [clj-predict.properties :as props]
             [clj-predict.time :as time]))
 
+(defn coord-state
+  [args]
+  (merge {:body :earth
+          :time (time/now)}
+         (apply hash-map args)))
+
 ;;;; Vector Ops ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn dot
@@ -49,12 +55,6 @@
       (conj en st))))
 
 ;;;; Coordinate Transforms ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn coord-state
-  [args]
-  (merge {:body :earth
-          :time (time/now)}
-         (apply hash-map args)))
 
 (defn deg->rad 
   "Convert from degrees to radians. For example:
