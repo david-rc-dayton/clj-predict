@@ -25,7 +25,7 @@
 
 (defn norm
   [v]
-  (let [mag (magnitude v)]
+  (let [mag (mag v)]
     (map #(/ % mag) v)))
 
 ;;;; Quaternion Ops ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,8 +52,8 @@
 
 (defn coord-state
   [args]
-  (merge {:time (time/now)
-          :body :earth}
+  (merge {:body :earth
+          :time (time/now)}
          (apply hash-map args)))
 
 (defn deg->rad 
@@ -83,11 +83,28 @@
               (Math/pow (* b (Math/sin phi)) 2)))
       (Math/sqrt))))
 
+(defn geo->ecf
+  [[lat lon alt] & args]
+  (let [s (coord-state args)
+        body (props/body :earth)
+        re (:semi-major-axis body)
+        e-squared (:ecc-squared body)
+        phi (deg->rad lat)
+        lam (deg->rad lon)
+        sin-phi (Math/sin phi)
+        cos-phi (Math/cos phi)
+        sin-lam (Math/sin lam)
+        cos-lam (Math/cos lam)
+        n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-phi 2)))))]
+    [(* (+ n alt) cos-phi cos-lam)
+     (* (+ n alt) cos-phi sin-lam)
+     (* (+ (* n (- 1 e-squared)) alt) sin-phi)]))
+
 (defn ecf->geo
   [[x y z] & args]
   (let [s (coord-state args)
         epsilon 1e-10
-        body (props/body (:body s))
+        body (props/body :earth)
         a (:semi-major-axis body)
         b (:semi-minor-axis body)
         e-sq (:ecc-squared body)
@@ -123,23 +140,6 @@
                   lam-out (rad->deg lam)
                   h (hn-fn p-next (rn-fn p-next))]
               [phi-out lam-out h])))))))
-
-(defn geo->ecf
-  [[lat lon alt] & args]
-  (let [s (coord-state args)
-        body (props/body (:body s))
-        re (:semi-major-axis body)
-        e-squared (:ecc-squared body)
-        phi (deg->rad lat)
-        lam (deg->rad lon)
-        sin-phi (Math/sin phi)
-        cos-phi (Math/cos phi)
-        sin-lam (Math/sin lam)
-        cos-lam (Math/cos lam)
-        n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-phi 2)))))]
-    [(* (+ n alt) cos-phi cos-lam)
-     (* (+ n alt) cos-phi sin-lam)
-     (* (+ (* n (- 1 e-squared)) alt) sin-phi)]))
 
 (defn ecf->eci
   [[x y z] & args]

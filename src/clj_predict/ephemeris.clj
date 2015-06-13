@@ -7,28 +7,28 @@
 ;;;; NORAD TLE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn str->tle
-  "Convert a *Two Line Element (TLE)* set, into a usable `predict4java` TLE
+  "Convert a Two Line Element (TLE) set, into a usable predict4java TLE
    object. Takes a single vector containing text strings of the form
-   `[name first-line second-line]` where:
+   [name first-line second-line] where:
 
-   > `name` - The name of the spacecraft  
-   > `first-line` - Line 1 of the orbital elements  
-   > `second-line` - Line 2 of the orbital elements
+     name - The name of the spacecraft  
+     first-line - Line 1 of the orbital elements  
+     second-line - Line 2 of the orbital elements
 
-   Returns a `predict4java` TLE object for use with the SGP4 propagator."
+   Returns a predict4java TLE object for use with the SGP4 propagator."
   [[name first-line second-line :as tle]]
   (TLE. (into-array String tle)))
 
 (defn valid-tle?
-  "Determine if a *Two Line Element Set (TLE)* is valid based on the checksum
+  "Determine if a Two Line Element Set (TLE) is valid based on the checksum
    value for each line. Takes a single vector containing text strings of the
-   form `[name first-line second-line]` where:
+   form [name first-line second-line] where:
 
-   > `name` - The name of the spacecraft  
-   > `first-line` - Line 1 of the orbital elements  
-   > `second-line` - Line 2 of the orbital elements
+     name - The name of the spacecraft  
+     first-line - Line 1 of the orbital elements  
+     second-line - Line 2 of the orbital elements
 
-   Returns `true` if the TLE vector appears properly formatted and passes a
+   Returns true if the TLE vector appears properly formatted and passes a
    checksum."
   [[name first-line second-line :as tle]]
   (let [char->int #(Character/getNumericValue %)
@@ -46,24 +46,36 @@
 ;;;; SGP4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn propagate
-  "Propagate satellite ephemeris using a *Two Line Element (TLE)* set. Takes two
+  "Propagate satellite ephemeris using a Two Line Element (TLE) set. Takes two
    arguments:
 
-   > `tle` - Vector containing tle data (see `valid-tle?`)  
-   > `date` - A `java.util.Date` object used as the propagation date
+     tle - Vector containing tle data (see valid-tle?)  
+     date - A java.util.Date object used as the propagation time
 
-   Returns the satellite's location as a map containing the keys
-   `:lat :lon :alt`, in degrees and meters."
+   Returns the satellite's location as a vector containing the [lat lon alt]
+   in degrees and meters."
   ([[name first-line second-line :as tle] date]
     (let [tle (str->tle tle)
           factory (doto (SatelliteFactory/createSatellite tle)
                     (.calculateSatelliteVectors date))
           position (.calculateSatelliteGroundTrack factory)
-          latitude (Math/toDegrees (.getLatitude position))
-          temp-longitude (Math/toDegrees (.getLongitude position))
-          longitude (cond
-                      (> temp-longitude 180) (- temp-longitude 360)
-                      (< temp-longitude 0) (+ temp-longitude 360)
-                      :else temp-longitude)
-          altitude (*  (.getAltitude position) 1000)]
-      {:lat latitude :lon longitude :alt altitude})))
+          lat (Math/toDegrees (.getLatitude position))
+          temp-lon (Math/toDegrees (.getLongitude position))
+          lon (cond
+                (> temp-lon 180) (- temp-lon 360)
+                (< temp-lon 0) (+ temp-lon 360)
+                :else temp-lon)
+          alt (*  (.getAltitude position) 1000)]
+      [lat lon alt])))
+
+;; Perturbations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn raan-j2
+  [{:keys [a e i]}]
+  (* -2.064734896e14 (Math/pow a -3.5)
+     (Math/pow (- 1 (* e e)) -2) (Math/cos (coord/deg->rad i))))
+
+(defn perigee-j2
+  [{:keys [a e i]}]
+  (* 1.032367448e14 (Math/pow a -3.5) (Math/pow (- 1 (* e e)) -2)
+     (- 4 (* 5 (Math/pow (Math/sin (coord/deg->rad i)) 2)))))

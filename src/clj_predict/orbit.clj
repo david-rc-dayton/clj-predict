@@ -148,17 +148,3 @@
      :o (right-ascension state-vectors)
      :w (argument-of-perigee state-vectors body)
      :v (true-anomaly state-vectors body)}))
-
-;; Perturbations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def rv {:r [7016 5740 638] :v [0.24 -0.79 -7.11]})
-
-(defn raan-j2
-  [{:keys [a e i] :as kepler}]
-  (* -2.064734896e14 (Math/pow a -3.5)
-     (Math/pow (- 1 (* e e)) -2) (Math/cos (coord/deg->rad i))))
-
-(defn perigee-j2
-  [{:keys [a e i] :as kepler}]
-  (* 1.032367448e14 (Math/pow a -3.5) (Math/pow (- 1 (* e e)) -2)
-     (- 4 (* 5 (Math/pow (Math/sin (coord/deg->rad i)) 2)))))
