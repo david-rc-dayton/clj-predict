@@ -33,15 +33,15 @@
 
 ;;;; Epoch ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn date->epoch-days
-  [date]
-  (float (/ (.getTime date) 1000 60 60 24)))
+(defn millis->days
+  [millis]
+  (/ millis 1000 60 60 24))
 
-(def j2000 (date-parse "00-001 12:00:00" "yy-DDD HH:mm:ss"))
+(def j2000 (date-parse "00-001 11:58:55" "yy-DDD HH:mm:ss"))
 
 (defn j2000-days
   [date]
-  (- (date->epoch-days date) (date->epoch-days j2000)))
+  (millis->days (- (.getTime date) (.getTime j2000))))
 
 (defn gmst
   [date]

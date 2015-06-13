@@ -5,20 +5,20 @@
 ;;;; Constants ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def pi
-  "Value of *π*."
+  "Value of π."
   (Math/PI))
 
 (def two-pi
-  "Value of *2π*."
+  "Value of 2π."
   (* 2 pi))
 
 (def half-pi
-  "Value of *π/2*."
+  "Value of π/2."
   (/ pi 2))
 
 (def ascii-legend
   "Map containing the legend of characters for use in the
-   `print-coverage-matrix` function."
+   print-coverage-matrix function."
   (let [k [0   1   2   3   4   5   :default]
         v ["." ":" "=" "%" "+" "V" "@"]]
     (atom (zipmap k (map #(str % " ") v)))))
@@ -26,22 +26,22 @@
 ;;;; Terminal Display ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn merge-ascii-legend!
-  "Merge the current `ascii-legend` with a new character map, for use in the
-   `print-coverage-matrix` function. For example:
+  "Merge the current ascii-legend with a new character map, for use in the
+   print-coverage-matrix function. For example:
 
-   Use the *&* and *$* symbols for cells in view of 8 and 9 satellites:  
-   > `(merge-ascii-legend! {8 \"&\", 9 \"$\"})`
+   Use the & and $ symbols for cells in view of 8 and 9 satellites:  
+     (merge-ascii-legend! {8 \"&\", 9 \"$\"})
 
-   Change the default symbol for coverage not defined in `ascii-legend` to *?*:  
-   > `(merge-ascii-legend! {:default \"?\"})`"
+   Change the default symbol for coverage not defined in ascii-legend to ?:  
+     (merge-ascii-legend! {:default \"?\"})"
   [merge-map]
   (swap! ascii-legend merge
          (zipmap (keys merge-map) (map #(str % " ") (vals merge-map)))))
 
 (defn print-coverage-matrix
-  "Format and print coverage matrix `m` to the output stream assigned to
-   &#42;out&#42; (typically *stdout*). Characters indicating the amount of
-   coverage at a given point are defined in the `ascii-legend` map."
+  "Format and print coverage matrix m to the output stream assigned to *out*
+   (typically stdout). Characters indicating the amount of coverage at a given
+   point are defined in the ascii-legend map."
   [m]
   (let [replace-fn #(or (get @ascii-legend %) (:default @ascii-legend))
         str-fn #(apply str (map replace-fn %))]
@@ -50,13 +50,13 @@
 ;;;; Coverage Element Operations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn cov-cosine
-  "Calculate the angular distance between two points using the *Law of Cosines*.
+  "Calculate the angular distance between two points using the Law of Cosines.
    Takes four arguments, in radians:
 
-   > `phi-1` - latitude of the starting point  
-   > `lam-1` - longitude of the starting point  
-   > `phi-2` - latitude of the ending point  
-   > `lam-2` - longitude of the ending point
+     phi-1 - latitude of the starting point  
+     lam-1 - longitude of the starting point  
+     phi-2 - latitude of the ending point  
+     lam-2 - longitude of the ending point
 
    Returns the angular distance between two points in radians."
   [phi-1 lam-1 phi-2 lam-2]
@@ -66,13 +66,13 @@
     (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))
 
 (defn cov-haversine
-  "Calculate the angular distance between two points using the
-   *Haversine Formula*. Takes four arguments, in radians:
+  "Calculate the angular distance between two points using the Haversine
+   Formula. Takes four arguments, in radians:
 
-   > `phi-1` - latitude of the starting point  
-   > `lam-1` - longitude of the starting point  
-   > `phi-2` - latitude of the ending point  
-   > `lam-2` - longitude of the ending point
+     phi-1 - latitude of the starting point  
+     lam-1 - longitude of the starting point  
+     phi-2 - latitude of the ending point  
+     lam-2 - longitude of the ending point
 
    Returns the angular distance between two points in radians."
   [phi-1 lam-1 phi-2 lam-2]
@@ -87,8 +87,8 @@
   "Map associating keywords with a method of coverage calculation. Available
    methods are:
 
-   > `:cosine` - *Law of Cosines* (fast)  
-   > `:haversine` - *Haversine Formula* (slow)"
+     :cosine - Law of Cosines (fast)  
+     :haversine - Haversine Formula (slow)"
   {:cosine    cov-cosine
    :haversine cov-haversine})
 
@@ -96,15 +96,15 @@
   "Generates a function with cached values for coverage calculation, for faster
    execution over a matrix. Takes two arguments:
 
-   > `method` - keyword for the method of calculation (see `cov-methods`)  
-   > `{:lat :lon :alt}` - location map of the satellite, in *degrees* and meters
+     method - keyword for the method of calculation (see cov-methods)  
+     {:lat :lon :alt} - location map of the satellite, in degrees and meters
 
    Returns a function that returns the angular distance between the satellite
    (previously entered) and a point on the Earth's surface. Takes two arguments
-   in *radians*:
+   in radians:
 
-   > `gnd-lat` - latitude of the point on the Earth's surface  
-   > `gnd-lon` - longitude of the point on the Earth's surface"
+     gnd-lat - latitude of the point on the Earth's surface  
+     gnd-lon - longitude of the point on the Earth's surface"
   [method {:keys [lat lon alt]}]
   (let [sat-lat (* lat (/ pi 180))
         sat-lon (* lon (/ pi 180))
@@ -117,12 +117,12 @@
 ;;;; Coverage Matrix Operations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn rangef
-  "Modified `range` function to create arrays of floating-point values with the
+  "Modified range function to create arrays of floating-point values with the
    correct number of elements. Takes three arguments:
 
-   > `start` - starting point of the range  
-   > `end` - ending point of the range  
-   > `step` - amount to increment or decrement each number in the sequence
+     start - starting point of the range  
+     end - ending point of the range  
+     step - amount to increment or decrement each number in the sequence
 
    Returns a list of floating-point numbers."
   [start end step]
@@ -133,10 +133,10 @@
 (defn blank-matrix
   "Generate a blank coverage matrix. Takes the argument:
 
-   > `dimensions` - a vector of the `width` & `height` for the desired matrix
+     dimensions - a vector of the width & height for the desired matrix
 
-   Returns a matrix containing coordinates of the form
-   `[latitude [longitudes]]`, in radians."
+   Returns a matrix containing coordinates of the form [latitude [longitudes]],
+   in radians."
   [[width height]]
   (let [step-width (/ two-pi width)
         step-height (/ pi height)
@@ -145,8 +145,8 @@
       (list lat lon))))
 
 (defn combine-matrix
-  "Add matrices `a` and `b`. A matrix is entered as a two-dimensional nested
-   list; the number of rows and columns in `a` and `b` must be equal.
+  "Add matrices a and b. A matrix is entered as a two-dimensional nested
+   list; the number of rows and columns in a and b must be equal.
 
    Returns the sum of the two matrices, as a two-dimensional nested list."
   [a b]
@@ -156,14 +156,14 @@
   "Generates a matrix of a satellite's coverage over the Earth's surface. Takes
    three arguments:
 
-   > `method` - keyword for the method of calculation (see `cov-methods`)  
-   > `sat-location` - map of the satellite's location (see `view-fn`)  
-   > `dimensions` - a vector containing the width & height of the output matrix
+     method - keyword for the method of calculation (see cov-methods)  
+     sat-location - map of the satellite's location (see view-fn)  
+     dimensions - a vector containing the width & height of the output matrix
 
    Returns a matrix representing global satellite coverage from [-90 90] degrees
    latitude and [-180 180] degrees longitude, centered at the Equator and the
-   Prime Meridian respectively. Elements in view are denoted by a *1*, otherwise
-   *0*."
+   Prime Meridian respectively. Elements in view are denoted by a 1,
+   otherwise 0."
   [method sat-location dimensions]
   (let [matrix (blank-matrix dimensions)
         in-view? (view-fn method sat-location)
@@ -174,9 +174,9 @@
   "Generates a matrix of multiple satellites' coverage over the Earth's surface.
    Takes three arguments:
 
-   > `method` - keyword for the method of calculation (see `cov-methods`)  
-   > `sat-locations` - a list of satellite location maps (see `view-fn`)  
-   > `dimensions` - a vector containing the width & height of the output matrix
+     method - keyword for the method of calculation (see cov-methods)  
+     sat-locations - a list of satellite location maps (see view-fn)  
+     dimensions - a vector containing the width & height of the output matrix
 
    Returns a matrix representing combined global satellite coverage from
    [-90 90] degrees latitude and [-180 180] degrees longitude, centered at the
@@ -190,9 +190,9 @@
   "Generates a matrix of a single, or multiple satellites' coverage over the
    Earth's surface. Takes three arguments:
 
-   > `method` - keyword from `clj-predict.coverage/cov-methods`  
-   > `sat-locations` - satellite location map (individual, or a list of maps)  
-   > `dimensions` - a vector containing the width & height of the output matrix
+     method - keyword from cov-methods  
+     sat-locations - satellite location map (individual, or a list of maps)  
+     dimensions - a vector containing the width & height of the output matrix
 
    Returns a matrix representing combined global satellite coverage from
    [-90 90] degrees latitude and [-180 180] degrees longitude, centered at the

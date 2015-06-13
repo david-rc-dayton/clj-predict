@@ -1,5 +1,7 @@
 # clj-predict
 
+*A work in progress; frequent changes to the API are likely.*
+
 The *clj-predict* library consolidates functions for satellite ephemeris
 propagation and other space maths. To use *clj-predict* with your
 [Leiningen](http://leiningen.org/) project, include the following in the

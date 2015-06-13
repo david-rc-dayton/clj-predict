@@ -1,16 +1,6 @@
 (ns clj-predict.properties
   "Physical properties and units used in calculation.")
 
-(def celestial-default (atom :earth))
-
-(defn celestial-body
-  []
-  @celestial-default)
-
-(defn celestial-default!
-  [k]
-  (reset! celestial-default k))
-
 (def grav 6.67259e-20)
 
 (defn celestial-body-factory
@@ -37,7 +27,7 @@
          :uranus  (celestial-body-factory    25559    0.0229  8.6810e25)
          :neptune (celestial-body-factory    24764    0.0171  1.0243e26)}))
 
-(defn celestial-map
+(defn body
   [k]
   (get @celestial-bodies k))
 
