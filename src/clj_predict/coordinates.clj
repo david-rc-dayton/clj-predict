@@ -97,7 +97,7 @@
 ;;;; Coordinate Transforms ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn wrap-geo
-  [[lat lon alt] & args]
+  [[lat lon alt]]
   (let [wrap-lon (cond
                    (> lon 180) (- lon 360)
                    (neg? lon)  (+ lon 360)
@@ -117,23 +117,23 @@
                      (Math/pow (* b (Math/sin phi)) 2))))))
 
 (defn geo->ecf
-  [[lat lon alt] & args]
+  [[lat lon alt]]
   (let [body (props/body :earth)
         re (:semi-major-axis body)
         e-squared (:ecc-squared body)
         phi (deg->rad lat)
         lam (deg->rad lon)
-        sin-lat (Math/sin lat)
-        cos-lat (Math/cos lat)
-        sin-lon (Math/sin lon)
-        cos-lon (Math/cos lon)
-        n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-lat 2)))))]
-    [(* (+ n alt) cos-lat cos-lon)
-     (* (+ n alt) cos-lat sin-lon)
-     (* (+ (* n (- 1 e-squared)) alt) sin-lat)]))
+        sin-phi (Math/sin phi)
+        cos-phi (Math/cos phi)
+        sin-lam (Math/sin lam)
+        cos-lam (Math/cos lam)
+        n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-phi 2)))))]
+    [(* (+ n alt) cos-phi cos-lam)
+     (* (+ n alt) cos-phi sin-lam)
+     (* (+ (* n (- 1 e-squared)) alt) sin-phi)]))
 
 (defn ecf->geo
-  [[x y z] & args]
+  [[x y z]]
   (let [epsilon 1e-10
         body (props/body :earth)
         a (:semi-major-axis body)

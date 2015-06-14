@@ -38,8 +38,7 @@
   [date]
   (let [d (+ (day-of-year date) (* (:orbital-period solar-properties) 3/4) 10)
         r (/ (* 2 Math/PI) (:orbital-period solar-properties))
-        t (:declination solar-properties)
-        rad->deg #(* % (/ 180 Math/PI))]
+        t (:declination solar-properties)]
     (* t (Math/sin (* r d)))))
 
 (defn solar-longitude

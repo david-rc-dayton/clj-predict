@@ -17,7 +17,7 @@
      second-line - Line 2 of the orbital elements
 
    Returns a predict4java TLE object for use with the SGP4 propagator."
-  [[name first-line second-line :as tle]]
+  [tle]
   (TLE. (into-array String tle)))
 
 (defn valid-tle?
@@ -55,7 +55,7 @@
 
    Returns the satellite's location as a vector containing the [lat lon alt]
    in degrees and meters."
-  ([[name first-line second-line :as tle] date]
+  ([tle date]
     (let [tle (str->tle tle)
           factory (doto (SatelliteFactory/createSatellite tle)
                     (.calculateSatelliteVectors date))

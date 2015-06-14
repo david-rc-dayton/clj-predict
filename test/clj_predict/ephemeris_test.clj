@@ -1,6 +1,7 @@
 (ns clj-predict.ephemeris-test
-  (:require [clj-predict.time :as t])
-  (:use clojure.test clj-predict.ephemeris))
+  (:require [clj-predict.time :as t]
+            [clj-predict.ephemeris :refer :all]
+            [clojure.test :refer :all]))
 
 (def iss-tle
   ["ISS (ZARYA)"
