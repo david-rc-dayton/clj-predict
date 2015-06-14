@@ -133,8 +133,6 @@
       :else (let [ta (coord/rad->deg (Math/acos (/ a b)))]
               (if (neg? r-dot-v) (- 360 ta) ta)))))
 
-(defn ecc-vector [& args] [0.0 0.0 0.0])
-
 (defn rv->kepler
   [r v & args]
   (let [s (orbit-state args)]
