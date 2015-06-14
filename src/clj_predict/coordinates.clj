@@ -9,6 +9,22 @@
           :time (time/now)}
          (apply hash-map args)))
 
+;; Unit Conversion ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn deg->rad 
+  "Convert from degrees to radians. For example:
+
+     (deg->rad 180) ;=> 3.141592653589793"
+  [deg]
+  (* deg (/ Math/PI 180)))
+
+(defn rad->deg
+  "Convert from radians to degrees. For example:
+
+     (rad->deg Math/PI) ;=> 180.0"
+  [rad]
+  (* rad (/ 180 Math/PI)))
+
 ;;;; Vector Ops ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn dot
@@ -79,20 +95,6 @@
       (conj en st))))
 
 ;;;; Coordinate Transforms ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn deg->rad 
-  "Convert from degrees to radians. For example:
-
-     (deg->rad 180) ;=> 3.141592653589793"
-  [deg]
-  (* deg (/ Math/PI 180)))
-
-(defn rad->deg
-  "Convert from radians to degrees. For example:
-
-     (rad->deg Math/PI) ;=> 180.0"
-  [rad]
-  (* rad (/ 180 Math/PI)))
 
 (defn wrap-geo
   [[lat lon alt] & args]
