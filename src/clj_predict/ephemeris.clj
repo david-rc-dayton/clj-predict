@@ -64,7 +64,7 @@
           temp-lon (Math/toDegrees (.getLongitude position))
           lon (cond
                 (> temp-lon 180) (- temp-lon 360)
-                (< temp-lon 0) (+ temp-lon 360)
+                (neg? temp-lon) (+ temp-lon 360)
                 :else temp-lon)
           alt (.getAltitude position)]
       [lat lon alt])))

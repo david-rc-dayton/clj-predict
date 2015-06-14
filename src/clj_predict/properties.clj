@@ -8,7 +8,7 @@
   (let [a semi-major-axis
         f flattening
         b (* a (- 1 f))
-        r (-> (+ b (* 2 a)) (/ 3))
+        r (/ (+ b (* 2 a)) 3)
         e (- (* 2 f) (* f f))
         m mass
         mu (* grav mass)]

@@ -36,8 +36,7 @@
 
    Returns the Sun's latitude at the given time, in degrees."
   [date]
-  (let [d (+ (day-of-year date)
-             (+ (* (:orbital-period solar-properties) 3/4) 10))
+  (let [d (+ (day-of-year date) (* (:orbital-period solar-properties) 3/4) 10)
         r (/ (* 2 Math/PI) (:orbital-period solar-properties))
         t (:declination solar-properties)
         rad->deg #(* % (/ 180 Math/PI))]
@@ -72,7 +71,7 @@
         T (:orbital-period solar-properties)
         t (+ (* T 1/4) 10)
         pi (Math/PI)]
-    (* ro (+ 1 (* ec (Math/sin (/ (* 2 pi (- dn t)) T)))))))
+    (* ro (inc (* ec (Math/sin (/ (* 2 pi (- dn t)) T)))))))
 
 (defn solar-position
   "Calculate the location of the Sun relative to the Earth. Takes a

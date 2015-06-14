@@ -44,7 +44,7 @@
    point are defined in the ascii-legend map."
   [m]
   (let [replace-fn #(or (get @ascii-legend %) (:default @ascii-legend))
-        str-fn #(apply str (map replace-fn %))]
+        str-fn #(clojure.string/join (map replace-fn %1))]
     (dorun (map #(println (str-fn %)) m))))
 
 ;;;; Coverage Element Operations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,10 +60,8 @@
 
    Returns the angular distance between two points in radians."
   [phi-1 lam-1 phi-2 lam-2]
-  (let [delta-phi-two (-> (Math/sin (double (/ (- phi-2 phi-1) 2)))
-                        (Math/pow 2))
-        delta-lam-two (-> (Math/sin (double (/ (- lam-2 lam-1) 2)))
-                        (Math/pow 2))
+  (let [delta-phi-two (Math/pow (Math/sin (double (/ (- phi-2 phi-1) 2))) 2)
+        delta-lam-two (Math/pow (Math/sin (double (/ (- lam-2 lam-1) 2))) 2)
         a (+ delta-phi-two (* (Math/cos (double phi-1))
                               (Math/cos (double phi-2)) delta-lam-two))]
     (* 2 (Math/atan2 (Math/sqrt a) (Math/sqrt (- 1 a))))))

@@ -51,7 +51,7 @@
     (map #(/ % mag) v)))
 
 (defn hyp [a b]
-  (Math/sqrt (+ (Math/pow (mag a) 2) (Math/pow (mag b) 2))))
+  (Math/hypot (mag a) (mag b)))
 
 (defn angle [a b]
   (let [n (dot a b)
@@ -83,7 +83,7 @@
           cp (cross (rest p) (rest q))
           poq (map #(* (first p) %) (rest q))
           qop (map #(* (first q) %) (rest p))
-          sum (map #(+ %1 %2 %3) poq qop cp)
+          sum (map + poq qop cp)
           st (- (* (first p) (first q)) dp)]
       (conj sum st))))
 
@@ -100,7 +100,7 @@
   [[lat lon alt] & args]
   (let [wrap-lon (cond
                    (> lon 180) (- lon 360)
-                   (< lon 0)   (+ lon 360)
+                   (neg? lon)  (+ lon 360)
                    :else lon)]
     [lat wrap-lon alt]))
 
@@ -111,11 +111,10 @@
         body (props/body (:body s))
         a (:semi-major-axis body)
         b (:semi-minor-axis body)]
-    (-> (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
-              (Math/pow (* b b (Math/sin phi)) 2))
-           (+ (Math/pow (* a (Math/cos phi)) 2)
-              (Math/pow (* b (Math/sin phi)) 2)))
-      (Math/sqrt))))
+    (Math/sqrt (/ (+ (Math/pow (* a a (Math/cos phi)) 2)
+                     (Math/pow (* b b (Math/sin phi)) 2))
+                  (+ (Math/pow (* a (Math/cos phi)) 2)
+                     (Math/pow (* b (Math/sin phi)) 2))))))
 
 (defn geo->ecf
   [[lat lon alt] & args]
@@ -142,12 +141,11 @@
         e-sq (:ecc-squared body)
         lam (Math/atan2 y x)
         r (-> (+ (* x x) (* y y) (* z z)) (Math/sqrt))
-        p (-> (+ (* x x) (* y y)) (Math/sqrt))
+        p (Math/sqrt (+ (* x x) (* y y)))
         phi-c (Math/atan2 p z)
         rn-fn (fn [pn]
                 (/ a (Math/sqrt (- 1 (* e-sq (Math/sin pn) (Math/sin pn))))))
-        hn-fn (fn [pn rn]
-                (-> (/ p (Math/cos pn)) (- rn)))
+        hn-fn (fn [pn rn] (- (/ p (Math/cos pn)) rn))
         pn-fn (fn [rn hn]
                 ; catch divide by zero
                 (if (zero? (+ rn hn))
