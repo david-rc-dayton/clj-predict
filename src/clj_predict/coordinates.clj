@@ -98,8 +98,7 @@
 
 (defn wrap-geo
   [[lat lon alt] & args]
-  (let [s (coord-state args)
-        wrap-lon (cond
+  (let [wrap-lon (cond
                    (> lon 180) (- lon 360)
                    (< lon 0)   (+ lon 360)
                    :else lon)]
@@ -120,25 +119,23 @@
 
 (defn geo->ecf
   [[lat lon alt] & args]
-  (let [s (coord-state args)
-        body (props/body :earth)
+  (let [body (props/body :earth)
         re (:semi-major-axis body)
         e-squared (:ecc-squared body)
         phi (deg->rad lat)
         lam (deg->rad lon)
-        sin-phi (Math/sin phi)
-        cos-phi (Math/cos phi)
-        sin-lam (Math/sin lam)
-        cos-lam (Math/cos lam)
-        n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-phi 2)))))]
-    [(* (+ n alt) cos-phi cos-lam)
-     (* (+ n alt) cos-phi sin-lam)
-     (* (+ (* n (- 1 e-squared)) alt) sin-phi)]))
+        sin-lat (Math/sin lat)
+        cos-lat (Math/cos lat)
+        sin-lon (Math/sin lon)
+        cos-lon (Math/cos lon)
+        n (/ re (Math/sqrt (- 1 (* e-squared (Math/pow sin-lat 2)))))]
+    [(* (+ n alt) cos-lat cos-lon)
+     (* (+ n alt) cos-lat sin-lon)
+     (* (+ (* n (- 1 e-squared)) alt) sin-lat)]))
 
 (defn ecf->geo
   [[x y z] & args]
-  (let [s (coord-state args)
-        epsilon 1e-10
+  (let [epsilon 1e-10
         body (props/body :earth)
         a (:semi-major-axis body)
         b (:semi-minor-axis body)
@@ -180,7 +177,7 @@
   [[x y z] & args]
   (let [s (coord-state args)
         g (time/gmst (:time s))]
-    [(+ (* x (Math/cos g)) (- (* y (Math/sin g))))
+    [(- (* x (Math/cos g)) (* y (Math/sin g)))
      (+ (* x (Math/sin g)) (* y (Math/cos g)))
      z]))
 
@@ -189,5 +186,5 @@
   (let [s (coord-state args)
         g (time/gmst (:time s))]
     [(+ (* i (Math/cos g)) (* j (Math/sin g)))
-     (+ (- (* i (Math/sin g))) (* j (Math/cos g)))
+     (+ (* i (- (Math/sin g))) (* j (Math/cos g)))
      k]))
