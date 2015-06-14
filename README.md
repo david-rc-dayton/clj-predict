@@ -1,6 +1,7 @@
 # clj-predict
 
-*A work in progress; frequent changes to the API are likely.*
+**DEPRECATED**: Functionality has been moved to the
+[satellite-clj](https://github.com/david-rc-dayton/satellite-clj) repository.
 
 The *clj-predict* library consolidates functions for satellite ephemeris
 propagation and other space maths. To use *clj-predict* with your
