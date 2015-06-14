@@ -153,8 +153,8 @@
 
 (defn distance
   [earth-station satellite]
-  (let [es (coord/geo->ecf earth-station)
-        sat (coord/geo->ecf satellite)
+  (let [es (coord/geo->ecef earth-station)
+        sat (coord/geo->ecef satellite)
         x-delta (Math/pow (- (first es) (first sat)) 2)
         y-delta (Math/pow (- (second es) (second sat)) 2)
         z-delta (Math/pow (- (last es) (last sat)) 2)]

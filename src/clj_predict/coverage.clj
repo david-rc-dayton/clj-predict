@@ -128,8 +128,8 @@
    Returns a list of floating-point numbers."
   [start end step]
   (map #(+ start (* % step))
-       (range 0 (/ (Math/abs (- end start))
-                   (Math/abs step)) 1)))
+       (range 0 (/ (Math/abs (double (- end start)))
+                   (Math/abs (double step))) 1)))
 
 (defn blank-matrix
   "Generate a blank coverage matrix. Takes the argument:

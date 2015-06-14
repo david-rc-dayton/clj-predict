@@ -41,7 +41,8 @@
 
 (defn j2000-days
   [date]
-  (millis->days (- (.getTime date) (.getTime j2000))))
+  (millis->days (- (.getTime ^java.util.Date date)
+                   (.getTime ^java.util.Date j2000))))
 
 (defn gmst
   [date]

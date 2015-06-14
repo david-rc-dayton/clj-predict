@@ -116,7 +116,7 @@
                   (+ (Math/pow (* a (Math/cos phi)) 2)
                      (Math/pow (* b (Math/sin phi)) 2))))))
 
-(defn geo->ecf
+(defn geo->ecef
   [[lat lon alt]]
   (let [body (props/body :earth)
         re (:semi-major-axis body)
@@ -132,46 +132,28 @@
      (* (+ n alt) cos-phi sin-lam)
      (* (+ (* n (- 1 e-squared)) alt) sin-phi)]))
 
-(defn ecf->geo
+(defn ecef->geo
   [[x y z]]
-  (let [epsilon 1e-10
+  (let [max-iter 5
         body (props/body :earth)
         a (:semi-major-axis body)
-        b (:semi-minor-axis body)
-        e-sq (:ecc-squared body)
+        e2 (:ecc-squared body)
         lam (Math/atan2 y x)
-        r (-> (+ (* x x) (* y y) (* z z)) (Math/sqrt))
-        p (Math/sqrt (+ (* x x) (* y y)))
+        p (mag [x y])
         phi-c (Math/atan2 p z)
-        rn-fn (fn [pn]
-                (/ a (Math/sqrt (- 1 (* e-sq (Math/sin pn) (Math/sin pn))))))
-        hn-fn (fn [pn rn] (- (/ p (Math/cos pn)) rn))
-        pn-fn (fn [rn hn]
-                ; catch divide by zero
-                (if (zero? (+ rn hn))
-                  (Math/atan (/ z p))
-                  (Math/atan (* (/ z p)
-                                (/ 1 (- 1 (* e-sq (/ rn (+ rn hn)))))))))]
-    ; handle special case at poles
-    (if (< p epsilon)
-      (let [pole-phi (rad->deg (if (neg? z) (deg->rad -90.0) (deg->rad 90.0)))
-            pole-lambda (rad->deg lam)
-            pole-height (- r b)]
-        [pole-phi pole-lambda pole-height])
-      ; otherwise, iterate toward a solution
-      (loop [p-now phi-c]
-        (let [r-next (rn-fn p-now)
-              h-next (hn-fn p-now r-next)
-              p-next (pn-fn r-next h-next)]
-          (if (> (Math/abs (- p-now p-next)) epsilon)
-            (recur p-next)
-            (let [l (+ z (* e-sq (rn-fn p-next) (Math/sin p-next)))
-                  phi-out (rad->deg p-next)
-                  lam-out (rad->deg lam)
-                  h (hn-fn p-next (rn-fn p-next))]
-              [phi-out lam-out h])))))))
+        rn-fn #(/ a (Math/sqrt (- 1 (* e2 (Math/sin %) (Math/sin %)))))]
+    (loop [phi-n phi-c dex 0]
+      (if (> dex max-iter)
+        [(rad->deg phi-n) (rad->deg lam) 
+         (- (/ p (Math/cos phi-n)) (rn-fn phi-n))]
+        (let [Rn (rn-fn phi-n) 
+              h (- (/ p (Math/cos phi-n)) Rn)
+              pn (Math/atan
+                   (* (/ z p)
+                      (Math/pow (- 1 (* e2 (/ Rn (+ Rn h)))) -1)))]
+          (recur pn (inc dex)))))))
 
-(defn ecf->eci
+(defn ecef->eci
   [[x y z] & args]
   (let [s (coord-state args)
         g (time/gmst (:time s))]
@@ -179,7 +161,7 @@
      (+ (* x (Math/sin g)) (* y (Math/cos g)))
      z]))
 
-(defn eci->ecf
+(defn eci->ecef
   [[i j k] & args]
   (let [s (coord-state args)
         g (time/gmst (:time s))]
