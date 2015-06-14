@@ -9,9 +9,9 @@
    > `:eccentricity` - Eccentricity of the Earth's orbit around the Sun  
    > `:orbital-period` - Duration of the Earth's orbit around the Sun, in days  
    > `:declination` - Solar elevation above the Equator at solstice, in degrees"
-  {:mean-distance 149597870700
-   :eccentricity 0.0161700
-   :orbital-period 365.25636
+  {:mean-distance 149598261
+   :eccentricity 0.01671123
+   :orbital-period 365.256363004
    :declination 23.439281})
 
 (defn day-of-year

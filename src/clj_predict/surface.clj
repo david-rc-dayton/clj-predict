@@ -7,12 +7,12 @@
 
 (defn adist-haversine
   [start-point end-point]
-  (let [s-p (coord/coordinate start-point :geodetic-rad)
-        e-p (coord/coordinate end-point :geodetic-rad)
-        p1 (:phi s-p)
-        p2 (:phi e-p)
-        delta-p (- (:phi e-p) (:phi s-p))
-        delta-l (- (:lam e-p) (:lam s-p))
+  (let [p1 (coord/deg->rad (first start-point))
+        p2 (coord/deg->rad (first end-point))
+        l1 (coord/deg->rad (second start-point))
+        l2 (coord/deg->rad (second end-point))
+        delta-p (- p2 p1)
+        delta-l (- l2 l1)
         a (+ (Math/pow (Math/sin (/ delta-p 2)) 2)
              (* (Math/cos p1) (Math/cos p2)
                 (Math/pow (Math/sin (/ delta-l 2)) 2)))]
@@ -20,23 +20,25 @@
 
 (defn adist-cosine
   [start-point end-point]
-  (let [s-p (coord/coordinate start-point :geodetic-rad)
-        e-p (coord/coordinate end-point :geodetic-rad)
-        p1 (:phi s-p)
-        p2 (:phi e-p)
-        delta-l (- (:lam e-p) (:lam s-p))]
+  (let [p1 (coord/deg->rad (first start-point))
+        p2 (coord/deg->rad (first end-point))
+        l1 (coord/deg->rad (second start-point))
+        l2 (coord/deg->rad (second end-point))
+        delta-l (- l2 l1)]
     (coord/rad->deg
       (Math/acos (+ (* (Math/sin p1) (Math/sin p2))
                     (* (Math/cos p1) (Math/cos p2) (Math/cos delta-l)))))))
 
 (defn adist-equirect
   [start-point end-point]
-  (let [s-p (coord/coordinate start-point :geodetic)
-        e-p (coord/coordinate end-point :geodetic)
-        delta-lon (- (:lon e-p) (:lon s-p))
-        lat-m (/ (+ (:lat e-p) (:lat s-p)) 2)
+  (let [p1 (coord/deg->rad (first start-point))
+        p2 (coord/deg->rad (first end-point))
+        l1 (coord/deg->rad (second start-point))
+        l2 (coord/deg->rad (second end-point))
+        delta-lon (- l2 l1)
+        lat-m (/ (+ p2 p1) 2)
         x (* delta-lon (Math/cos (coord/deg->rad lat-m)))
-        y (- (:lat e-p) (:lat s-p))]
+        y (- p2 p1)]
     (Math/sqrt (+ (* x x) (* y y)))))
 
 (def adist-methods
@@ -56,16 +58,15 @@
     (adist-fn start-point end-point)))
 
 (defn distance-to-horizon
-  ([observer]
-    (distance-to-horizon observer (props/celestial-body)))
-  ([observer body]
-    (let [o-p (coord/coordinate observer :geodetic-rad)
-          r (coord/geo-radius observer body)]
-      (coord/rad->deg (Math/acos (/ r (+ r (:h o-p))))))))
+  ([altitude]
+    (distance-to-horizon altitude :earth))
+  ([altitude body]
+    (let [r ((:mean-radius (props/body body)))]
+      (coord/rad->deg (Math/acos (/ r (+ r altitude)))))))
 
 (defn surface-visible?
   ([method observer ground]
-    (surface-visible? method observer ground (props/celestial-body)))
+    (surface-visible? method observer ground :earth))
   ([method observer ground body]
     (let [adist-fn (get adist-methods method)
           limit (distance-to-horizon observer body)]
@@ -122,11 +123,11 @@
 
 (defn azimuth
   [earth-station satellite]
-  (let [es (coord/coordinate earth-station :geodetic-rad)
-        sat (coord/coordinate satellite :geodetic-rad)
-        Le (:phi es)
-        Ls (:phi sat)
-        ls-le (- (:lam sat) (:lam es))
+  (let [Le (coord/deg->rad (first earth-station))
+        Ls (coord/deg->rad (first satellite))
+        le (coord/deg->rad (second earth-station))
+        ls (coord/deg->rad (second satellite))
+        ls-le (- ls le)
         y (* (Math/sin ls-le) (Math/cos Ls))
         x (- (* (Math/cos Le) (Math/sin Ls))
              (* (Math/sin Le) (Math/cos Ls) (Math/cos ls-le)))]
@@ -134,11 +135,9 @@
 
 (defn elevation
   [earth-station satellite]
-  (let [es (coord/coordinate earth-station :geodetic)
-        sat (coord/coordinate satellite :geodetic)
-        A (coord/deg->rad (:lat es))
-        B (coord/deg->rad (:lat sat))
-        Lt (- (:lon es) (:lon sat))
+  (let [A (coord/deg->rad (first earth-station))
+        B (coord/deg->rad (first satellite))
+        Lt (- (second earth-station) (second satellite))
         L (coord/deg->rad (cond 
                             (> Lt 180)  (- Lt 360)
                             (< Lt -180) (+ Lt 360)
@@ -146,19 +145,19 @@
         D (coord/rad->deg
             (Math/acos (+ (* (Math/sin A) (Math/sin B))
                           (* (Math/cos A) (Math/cos B) (Math/cos L)))))
-        K (/ (+ (coord/geo-radius sat) (:alt sat))
-             (+ (coord/geo-radius es) (:alt es)))
+        K (/ (+ (coord/geo-radius (first satellite)) (last satellite))
+             (+ (coord/geo-radius (first earth-station)) (last earth-station)))
         D-prime (coord/deg->rad (- 90 D))]
     (coord/rad->deg (Math/atan (- (Math/tan D-prime)
                                   (/ 1 (* K (Math/cos D-prime))))))))
 
 (defn distance
   [earth-station satellite]
-  (let [es (coord/coordinate earth-station :ecef)
-        sat (coord/coordinate satellite :ecef)
-        x-delta (Math/pow (- (:x es) (:x sat)) 2)
-        y-delta (Math/pow (- (:y es) (:y sat)) 2)
-        z-delta (Math/pow (- (:z es) (:z sat)) 2)]
+  (let [es (coord/geo->ecf earth-station)
+        sat (coord/geo->ecf satellite)
+        x-delta (Math/pow (- (first es) (first sat)) 2)
+        y-delta (Math/pow (- (second es) (second sat)) 2)
+        z-delta (Math/pow (- (last es) (last sat)) 2)]
     (Math/sqrt (+ x-delta y-delta z-delta))))
 
 (defn look-angle
@@ -168,22 +167,3 @@
         rng (distance earth-station satellite)
         vis? (pos? el)]
     {:az az :el el :rng rng :vis? vis?}))
-
-(defn aspect-angle
-  [origin point-one point-two]
-  (let [a (coord/coordinate origin :ecef)
-        b (coord/coordinate point-one :ecef)
-        c (coord/coordinate point-two :ecef)
-        mag-fn (fn [{:keys [x y z]}]
-                 (Math/sqrt (+ (* x x) (* y y) (* z z))))
-        a-b {:x (- (:x a) (:x b))
-             :y (- (:y a) (:y b))
-             :z (- (:z a) (:z b))}
-        a-c {:x (- (:x a) (:x c))
-             :y (- (:y a) (:y c))
-             :z (- (:z a) (:z c))}
-        n (+ (* (:x a-b) (:x a-c))
-             (* (:y a-b) (:y a-c))
-             (* (:z a-b) (:z a-c)))
-        d (reduce * (map mag-fn [a-b a-c]))]
-    (coord/rad->deg (Math/acos (/ n d)))))

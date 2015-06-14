@@ -70,6 +70,15 @@
   [rad]
   (* rad (/ 180 Math/PI)))
 
+(defn wrap-geo
+  [[lat lon alt] & args]
+  (let [s (coord-state args)
+        wrap-lon (cond
+                   (> lon 180) (- lon 360)
+                   (< lon 0)   (+ lon 360)
+                   :else lon)]
+    [lat wrap-lon alt]))
+
 (defn geo-radius
   [latitude & args]
   (let [s (coord-state args)
@@ -156,12 +165,3 @@
     [(+ (* i (Math/cos g)) (* j (Math/sin g)))
      (+ (- (* i (Math/sin g))) (* j (Math/cos g)))
      k]))
-
-(defn wrap-geo
-  [[lat lon alt] & args]
-  (let [s (coord-state args)
-        wrap-lon (cond
-                   (> lon 180) (- lon 360)
-                   (< lon 0)   (+ lon 360)
-                   :else lon)]
-    [lat wrap-lon alt]))

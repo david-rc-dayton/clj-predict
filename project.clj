@@ -4,6 +4,7 @@
   :license {:name "The MIT License (MIT)"
             :url "http://opensource.org/licenses/MIT"
             :distribution :repo}
+  ; :profiles {:uberjar {:aot :all}}
   :deploy-repositories {"clojars" {:sign-releases false}}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [uk.me.g4dpz/predict4java "1.1.3"]])
