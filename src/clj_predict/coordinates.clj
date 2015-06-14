@@ -34,6 +34,30 @@
   (let [mag (mag v)]
     (map #(/ % mag) v)))
 
+(defn hyp [a b]
+  (Math/sqrt (+ (Math/pow (mag a) 2) (Math/pow (mag b) 2))))
+
+(defn angle [a b]
+  (let [n (dot a b)
+        m (* (mag a) (mag b))
+        theta (rad->deg (Math/acos (/ n m)))]
+    [theta (- 360 theta)]))
+
+(defn components-2d [r t]
+  (let [theta (deg->rad t)
+        x (* (Math/cos theta) r)
+        y (* (Math/sin theta) r)]
+    [x y]))
+
+(defn components-3d [r t a]
+  (let [theta (deg->rad t)
+        alpha (deg->rad a)
+        r-prime (* r (Math/cos theta))
+        x (* (Math/sin theta) r)
+        y (* (Math/sin alpha) r-prime)
+        z (* (Math/cos alpha) r-prime)]
+    [x y z]))
+
 ;;;; Quaternion Ops ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn q-product
